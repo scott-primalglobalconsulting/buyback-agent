@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Task 4.1 — Initial schema migration (2026-07-23)
+
+- Added `supabase/migrations/0001_init.sql`: `pgcrypto` extension plus five
+  tables — `workspaces`, `workspace_members`, `audits`, `audit_items`,
+  `sops` — with FK cascades to `workspaces`/`audits`/`audit_items` and a
+  `role` check constraint (`owner`/`member`). Schema only.
+- **RLS deliberately deferred to Task 4.2 (`0002_rls.sql`)** — this file
+  enables no RLS and defines no policies.
+- Updated `docs/architecture/migrations.md`: `0001_init.sql` moved to a
+  Landed section; `0002`/`0003` remain planned; cross-workspace isolation
+  check placeholder preserved for Task 4.2.
+- Not applied here — the controller (main thread) manages the local
+  Supabase stack and applies/verifies the migration.
+
 ### Task 1.3 — CI workflow + project docs/config (2026-07-23)
 
 - Added `.github/workflows/ci.yml`: lint + typecheck + test on push to
