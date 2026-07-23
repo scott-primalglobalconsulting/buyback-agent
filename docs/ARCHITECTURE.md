@@ -1,6 +1,6 @@
 # Buyback Agent — Architecture
 
-Last updated: 2026-07-23 15:24 EST
+Last updated: 2026-07-23 15:31 EST
 
 ## Row-Level Security
 
@@ -108,6 +108,18 @@ select public.is_workspace_member('00000000-0000-0000-0000-0000000000b1') as is_
 select id, workspace_id, title from public.audits order by title;                            -- expect only Audit A
 select id, workspace_id, title from public.audits
   where id = '00000000-0000-0000-0000-0000000000b2';                                         -- expect 0 rows
+select workspace_id, user_id, role from public.workspace_members;                            -- expect only wsA/userA
+select id, name from public.workspaces;                                                      -- expect only Workspace A
+
+-- write-path: positive controls SUCCEED, cross-workspace / foreign-owner DENIED by WITH CHECK
+insert into public.audits (workspace_id, created_by, title)
+  values ('...a1', '...00a', 'Audit A3 by userA');   -- member workspace  -> SUCCESS
+insert into public.audits (workspace_id, created_by, title)
+  values ('...b1', '...00a', 'Cross-ws sneak');       -- NON-member wsB    -> DENIED
+insert into public.workspaces (name, owner_id)
+  values ('Rogue WS', '...00b');                       -- foreign owner_id  -> DENIED
+insert into public.workspaces (name, owner_id)
+  values ('userA second WS', '...00a');                -- self owner_id     -> SUCCESS
 reset role;
 
 -- userB, symmetric
@@ -121,4 +133,63 @@ reset role;
 rollback;
 ```
 
-<!-- CAPTURED OUTPUT PENDING — controller runs the transcript against the live DB and pastes real output here (Gate 4 evidence) -->
+### Captured output (real, from the live local Postgres)
+
+Applied to a fresh DB via `supabase db reset` (0001 + 0002), then run with:
+
+```
+docker exec -i supabase_db_buyback-agent psql -U postgres -d postgres < .superpowers/sdd/rls-transcript.sql
+```
+
+```text
+=== userA: helper says member of wsA (expect t) ===
+ is_member_wsa
+---------------
+ t
+=== userA: helper says member of wsB (expect f) ===
+ is_member_wsb
+---------------
+ f
+=== userA sees only workspace A audit (expect 1 row: Audit A) ===
+                  id                  |             workspace_id             |  title
+--------------------------------------+--------------------------------------+---------
+ 00000000-0000-0000-0000-0000000000a2 | 00000000-0000-0000-0000-0000000000a1 | Audit A
+(1 row)
+=== userA explicitly targets workspace B audit (expect 0 rows) ===
+ id | workspace_id | title
+----+--------------+-------
+(0 rows)
+=== userA sees only workspace A membership (expect 1 row: userA/wsA) ===
+             workspace_id             |               user_id                | role
+--------------------------------------+--------------------------------------+-------
+ 00000000-0000-0000-0000-0000000000a1 | 00000000-0000-0000-0000-00000000000a | owner
+(1 row)
+=== userA sees only workspace A itself (expect 1 row: Workspace A) ===
+                  id                  |    name
+--------------------------------------+-------------
+ 00000000-0000-0000-0000-0000000000a1 | Workspace A
+(1 row)
+=== userA INSERT audit into wsA (member) -- expect SUCCESS (INSERT 0 1) ===
+INSERT 0 1
+=== userA INSERT audit into wsB (NOT member) -- expect DENIED by WITH CHECK ===
+ERROR:  new row violates row-level security policy for table "audits"
+=== userA INSERT workspace owned by userB -- expect DENIED (owner_id != auth.uid) ===
+ERROR:  new row violates row-level security policy for table "workspaces"
+=== userA INSERT workspace owned by self -- expect SUCCESS (INSERT 0 1) ===
+INSERT 0 1
+=== userB sees only workspace B audit (expect 1 row: Audit B) ===
+                  id                  |             workspace_id             |  title
+--------------------------------------+--------------------------------------+---------
+ 00000000-0000-0000-0000-0000000000b2 | 00000000-0000-0000-0000-0000000000b1 | Audit B
+(1 row)
+=== userB explicitly targets workspace A audit (expect 0 rows) ===
+ id | workspace_id | title
+----+--------------+-------
+(0 rows)
+```
+
+**Result:** read isolation holds both directions (each user sees only their
+workspace's rows; explicit cross-workspace reads return 0 rows), and the
+write-path `WITH CHECK` clauses deny both a cross-workspace child insert and a
+foreign-owner workspace insert while allowing the legitimate in-workspace and
+self-owned writes. Cross-workspace isolation is verified, not asserted.
