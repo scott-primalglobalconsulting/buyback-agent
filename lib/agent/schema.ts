@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS } from '@/lib/buyback/types';
 
-export const DRIP_QUADRANTS = ['Delegate', 'Replace', 'Invest', 'Produce'] as const;
-export const VALUE_TIERS = ['$10', '$100', '$1000', '$10000'] as const;
-export const RECOMMENDATIONS = ['keep', 'delegate', 'eliminate'] as const;
+// DRIP_QUADRANTS / VALUE_TIERS / RECOMMENDATIONS are single-sourced in
+// lib/buyback/types (the domain vocab). HIRE_ROLES is an LLM-contract-only
+// enum with no domain-math consumer, so it stays local to the agent layer.
+export { DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS };
 export const HIRE_ROLES = ['admin', 'delivery', 'marketing', 'sales', 'leadership'] as const;
 
 export const ScoredItemSchema = z.object({
