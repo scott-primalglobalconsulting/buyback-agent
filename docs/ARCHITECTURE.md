@@ -1,6 +1,6 @@
 # Buyback Agent — Architecture
 
-Last updated: 2026-07-23 15:41 EST
+Last updated: 2026-07-23 16:03 EST
 
 ## Row-Level Security
 
@@ -245,3 +245,40 @@ workspace insert while allowing legitimate in-workspace and self-owned writes;
 and the `seed_workspace_owner` trigger correctly bootstraps userC's membership
 so a freshly-created workspace is immediately usable by its owner.
 Cross-workspace isolation is verified, not asserted.
+
+## Abuse-guard tables (deny-all RLS)
+
+The `demo_*` tables (`demo_cache`, `demo_rate`, `demo_budget`) back the
+anonymous `/demo` cost controls (sample cache, per-IP rate limit, daily API
+budget breaker). They carry no user data and must be invisible to browsers and
+logged-in users alike — a client that could read them could time an attack
+around the budget, and one that could write them could forge a fresh cache or
+zero the breaker. `0003_abuse_guard.sql` enables RLS on all three and creates
+**no policies at all**, so anon/authenticated get deny-all; only the
+RLS-exempt service role (used solely by `lib/db/guard.ts`) reads or writes
+them. Writes to the counters go through two `SECURITY DEFINER`
+`INSERT .. ON CONFLICT DO UPDATE` RPCs so concurrent requests serialize on the
+conflicting row and the returned count is exact.
+
+Verified live (`supabase db reset` applies `0001`–`0003` cleanly, then probed):
+
+```text
+=== RLS enabled + policy count per demo table (expect rls=t, policies=0) ===
+   relname   | rls_enabled | policies
+-------------+-------------+----------
+ demo_budget | t           |        0
+ demo_cache  | t           |        0
+ demo_rate   | t           |        0
+
+-- seeded cache='sample' and budget=42 as superuser, then:
+ANON        read demo_cache -> 0 rows,  demo_budget -> 0 rows      (deny-all)
+AUTHENTICATED read demo_cache -> 0 rows, demo_budget -> 0 rows     (deny-all)
+AUTHENTICATED insert demo_budget (zero the breaker)
+            -> ERROR: new row violates row-level security policy   (write denied)
+SERVICE_ROLE read demo_cache -> 1, demo_budget.live_count -> 42; update -> 99  (full access)
+=== atomic RPCs (service_role): incr_demo_rate x2 -> 1 then 2; incr_daily_live_count -> 1 ===
+```
+
+The tables are unreadable and unwritable by anon and authenticated, reachable
+only by the service role, and the counter RPCs increment atomically. Verified,
+not asserted.
