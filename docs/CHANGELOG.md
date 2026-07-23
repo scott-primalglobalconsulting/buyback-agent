@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+### Task 5.1 — Sample week + guard-enforced streaming analyze route (2026-07-23)
+
+- Added `lib/sample.ts` — `SAMPLE_WEEK: TaskInput[]`, the fixed 10-task demo
+  dataset (40 hrs/wk, all four DRIP quadrants) the anonymous `/demo` path
+  analyzes. Pure data (no React/Next/Supabase/Anthropic). TDD:
+  `__tests__/sample.test.ts` written first and seen failing (`Cannot find
+  package '@/lib/sample'`), then implemented green.
+- Added `app/api/analyze/route.ts` — POST, `runtime = 'nodejs'`. Consumes
+  `lib/agent`, `lib/db`, `lib/guard`, `lib/buyback` ONLY (no direct Anthropic
+  or Supabase import). Auth-first: a valid session (`getSessionUserId`) →
+  Zod-parse + `validatePayloadSize` the body (400/413 on reject) →
+  `streamAnalyzeAudit(items)` with an `analyzeAudit` retry fallback. No session
+  → ignore the body, run the guard over `SAMPLE_WEEK`: `serve_cache`/
+  `breaker_serve_cache` replay a canned thinking log then emit the cached
+  result (no API), `rate_limited` → 429, `unavailable` → 503, `compute_live`
+  → `incrDailyLiveCount` (increment-then-check against the daily budget to
+  close the concurrency overshoot), stream, then `putSampleCache`.
+- SSE schema (comment at top of route; consumed by Task 5.2): `data: {json}\n\n`
+  with `{type:'thinking',text}` · `{type:'result',result}` · `{type:'error',
+  message}`.
+- IP privacy: route hashes the client IP (`sha256(ip + SERVER_SALT)`, node
+  crypto) and passes only `ipHash` to `lib/db/guard`; raw IPs never leave the
+  route. Added `lib/db/session.ts` (`getSessionUserId`, `getUser`-verified) so
+  the route detects auth without touching Supabase directly. Documented
+  `SERVER_SALT` in `.env.example`.
+- Tests: `__tests__/api/analyze.test.ts` fakes the db/agent seams to cover
+  `rate_limited` (429), cache-serve (200, thinking replay + result, asserts NO
+  agent call), authed over-cap (413), and malformed body (400). Suite 38
+  tests, all green; typecheck + lint clean. The live `compute_live` leg is an
+  operator gate — NOT exercised in CI.
+
 ### Phase 5 kickoff — design system (2026-07-23)
 
 - Brainstormed the Phase 5 UI direction (anti-"AI slop" mandate). Operator
