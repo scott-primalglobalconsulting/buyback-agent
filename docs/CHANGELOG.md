@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+### Task 4.4 — Abuse-guard: pure policy + demo counters/cache (2026-07-23)
+
+- Added `lib/guard/policy.ts` (PURE — no React/Next/Supabase/I/O/clock):
+  `GUARD_LIMITS`, `DemoVerdict`, `decideDemo`, `validatePayloadSize`.
+  `decideDemo` precedence (cost-bearing, `>=` against every cap): fresh cache
+  → `serve_cache` (short-circuits before any rate/budget check) > per-IP cap
+  → `rate_limited` > daily budget spent → `breaker_serve_cache` if any cache
+  row exists else `unavailable` > `compute_live`. Re-exported via
+  `lib/guard/index.ts`.
+- TDD: `__tests__/guard/policy.test.ts` written first and seen failing
+  (`Cannot find package '@/lib/guard/policy'`), then implemented. Suite now
+  29 tests (was 21), all green; typecheck + lint clean.
+- Added `supabase/migrations/0003_abuse_guard.sql`: `demo_cache`, `demo_rate`,
+  `demo_budget` with **RLS enabled and ZERO policies (deny-all)** — only the
+  RLS-exempt service role reaches them (no browser/logged-in scraping or
+  forging). Plus two atomic `INSERT..ON CONFLICT DO UPDATE` RPCs
+  (`incr_demo_rate`, `incr_daily_live_count`, `search_path = ''`) so
+  concurrent `/demo` requests cannot race the rate limit or breaker.
+- Added `lib/db/guard.ts` (server-only, service-role client only): the only
+  guard file touching Supabase — `getSampleCache`, `putSampleCache`,
+  `incrDemoRate` (via RPC), `getDailyLiveCount`, `incrDailyLiveCount` (via
+  RPC). Raw IP never reaches lib/db; the route passes a pre-hashed `ipHash`.
+- Not applied here — the controller applies `0003` and captures the fresh-DB
+  reset + RLS deny-all transcript at Gate 4.
+
 ### Task 4.3 — Typed RLS-aware Supabase query layer (2026-07-23)
 
 - Added `lib/db/`: `types.ts` (row types, exact match to `0001_init.sql`),
