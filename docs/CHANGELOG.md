@@ -25,6 +25,22 @@
 - Verified `npm test` (21 passing), `npm run typecheck`, `npm run lint` green.
   DB not applied here — the controller applies the migration and runs the
   transcript against the live local Supabase.
+- **Gate 4 evidence captured (controller):** applied `0001`+`0002` to a fresh
+  local Postgres (`supabase db reset`) and ran the transcript as authenticated
+  userA/userB with forged JWT `sub` claims. Real output pasted into
+  `ARCHITECTURE.md` proving read isolation both directions AND write-path
+  `WITH CHECK` denials (cross-workspace child insert and foreign-owner
+  workspace insert rejected; in-workspace/self-owned writes succeed).
+  Adversarial reviewer independently probed UPDATE-move, DELETE, `audit_items`/
+  `sops` write chains, `workspace_members` self-escalation, `is_workspace_member(NULL)`,
+  and anon — no isolation hole found.
+- **M1 fix — RLS bootstrap deadlock:** added an `AFTER INSERT` trigger
+  `seed_workspace_owner` (SECURITY DEFINER, `search_path=''`) to
+  `0002_rls.sql` that seeds the workspace creator as its `owner` member.
+  Without it an authenticated user could create a workspace but was then
+  locked out (couldn't insert their own first membership row under RLS).
+  Isolation-safe (only ever seeds the creator's own workspace). Re-verified
+  live with a userC bootstrap case in the transcript.
 
 ### Task 4.1 — Initial schema migration (2026-07-23)
 
