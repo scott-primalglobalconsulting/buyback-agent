@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GUARD_LIMITS } from '@/lib/guard/policy';
 
@@ -13,7 +14,10 @@ vi.mock('@/lib/db/guard', () => ({
   getDailyLiveCount: vi.fn(),
   incrDailyLiveCount: vi.fn(),
 }));
-vi.mock('@/lib/agent', () => ({
+// Keep the REAL AnalysisResultSchema — the cache-serve path re-validates rows
+// against it — while faking the API-calling seams.
+vi.mock('@/lib/agent', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/agent')>()),
   analyzeAudit: vi.fn(),
   streamAnalyzeAudit: vi.fn(),
 }));
@@ -27,6 +31,9 @@ import {
   putSampleCache,
 } from '@/lib/db/guard';
 import { analyzeAudit, streamAnalyzeAudit } from '@/lib/agent';
+
+const hashIp = (ip: string) =>
+  createHash('sha256').update(ip + process.env.SERVER_SALT).digest('hex');
 
 const CACHED_RESULT = {
   items: [
@@ -92,6 +99,47 @@ describe('POST /api/analyze — demo path', () => {
     expect(text).toContain('Bookkeeping & reconciliation');
     assertNoAgentCall();
     expect(putSampleCache).not.toHaveBeenCalled();
+  });
+
+  it('rate-limits on the trusted x-real-ip, not a spoofed x-forwarded-for', async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+    vi.mocked(incrDemoRate).mockResolvedValue(1);
+    vi.mocked(getSampleCache).mockResolvedValue({ resultJson: CACHED_RESULT, ageMs: 1000 });
+    vi.mocked(getDailyLiveCount).mockResolvedValue(0);
+
+    const req = new Request('http://localhost/api/analyze', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        // Attacker-rotated leftmost XFF hop must be ignored in favor of x-real-ip.
+        'x-forwarded-for': '6.6.6.6',
+        'x-real-ip': '9.9.9.9',
+      },
+    });
+
+    await POST(req);
+
+    expect(incrDemoRate).toHaveBeenCalledWith(hashIp('9.9.9.9'));
+    expect(incrDemoRate).not.toHaveBeenCalledWith(hashIp('6.6.6.6'));
+  });
+
+  it('emits an error (not malformed data) when a cached row fails validation', async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue(null);
+    vi.mocked(incrDemoRate).mockResolvedValue(1);
+    // Corrupt/stale-shaped cache row: missing summary, bad enum values.
+    vi.mocked(getSampleCache).mockResolvedValue({
+      resultJson: { items: [{ task: 'x' }] },
+      ageMs: 1000,
+    });
+    vi.mocked(getDailyLiveCount).mockResolvedValue(0);
+
+    const res = await POST(post());
+
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toContain('"type":"error"');
+    expect(text).not.toContain('"type":"result"');
+    assertNoAgentCall();
   });
 });
 

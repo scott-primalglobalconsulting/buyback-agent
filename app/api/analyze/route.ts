@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { analyzeAudit, streamAnalyzeAudit, type AnalysisResult } from '@/lib/agent';
+import {
+  analyzeAudit,
+  streamAnalyzeAudit,
+  AnalysisResultSchema,
+  type AnalysisResult,
+} from '@/lib/agent';
 import { decideDemo, validatePayloadSize, GUARD_LIMITS } from '@/lib/guard/policy';
 import {
   getSampleCache,
@@ -37,7 +42,7 @@ export const runtime = 'nodejs';
 
 type SseEvent =
   | { type: 'thinking'; text: string }
-  | { type: 'result'; result: AnalysisResult | unknown }
+  | { type: 'result'; result: AnalysisResult }
   | { type: 'error'; message: string };
 
 // Authenticated request body: { items: TaskInput[] }. Parsed BEFORE
@@ -201,11 +206,20 @@ async function* demoLiveStream(): AsyncGenerator<SseEvent> {
 }
 
 // Replay the canned thinking log, then emit the cached result. No API call.
+// Re-validate the DB row against AnalysisResultSchema before streaming it: a
+// cache row is persisted data that could be stale-shaped or corrupt, and we
+// must never stream malformed data to the client as a genuine `result`. On a
+// validation miss, emit an error event instead.
 async function* cacheReplayStream(resultJson: unknown): AsyncGenerator<SseEvent> {
+  const parsed = AnalysisResultSchema.safeParse(resultJson);
+  if (!parsed.success) {
+    yield { type: 'error', message: GENERIC_ERROR };
+    return;
+  }
   for (const text of CACHE_REPLAY_LOG) {
     yield { type: 'thinking', text };
   }
-  yield { type: 'result', result: resultJson };
+  yield { type: 'result', result: parsed.data };
 }
 
 // ── SSE / JSON plumbing ──────────────────────────────────────────────────────
@@ -235,12 +249,23 @@ function jsonError(status: number, message: string): Response {
   });
 }
 
-// First hop of x-forwarded-for is the client. Falls back to x-real-ip, then a
-// constant so hashing never throws — a missing IP just shares one rate bucket.
+// Client IP for the per-IP demo rate limit. PREFER x-real-ip: it's a
+// platform-set single-value header the client cannot spoof. The leftmost
+// x-forwarded-for hop is CLIENT-CONTROLLED — an attacker rotates it per request
+// to mint a fresh ipHash and bypass demoRunsPerIpPerHour entirely — so it must
+// never be the primary source; it's only a local-dev / non-x-real-ip-proxy
+// fallback. Missing both, a constant sentinel keeps hashing from throwing and
+// fails toward the metered path (one shared rate bucket).
+//
+// DEPLOY (Phase 7): on Vercel, CONFIRM the trusted client IP header
+// (x-real-ip / x-vercel-forwarded-for) before relying on this; the leftmost
+// inbound XFF hop is spoofable and must never be the primary source.
 function clientIp(req: Request): string {
+  const real = req.headers.get('x-real-ip');
+  if (real) return real.trim();
   const fwd = req.headers.get('x-forwarded-for');
   if (fwd) return fwd.split(',')[0].trim();
-  return req.headers.get('x-real-ip') ?? 'unknown';
+  return 'unknown';
 }
 
 // sha256(ip + SERVER_SALT). The RAW IP never leaves this function — only the
