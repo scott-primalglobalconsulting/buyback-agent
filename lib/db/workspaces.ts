@@ -19,12 +19,26 @@ export async function createWorkspace(name: string): Promise<WorkspaceRow> {
     throw new Error('createWorkspace: no authenticated user');
   }
 
+  // INSERT ... RETURNING is rejected here: the RETURNING projection is filtered
+  // by the workspaces_select policy (is_workspace_member(id)), but the owner's
+  // membership is seeded by the seed_workspace_owner AFTER INSERT trigger, which
+  // has not taken effect at RETURNING time — so `.insert().select()` throws
+  // "new row violates row-level security policy" despite a successful insert
+  // (verified against the live DB). Supply the id app-side, insert WITHOUT
+  // RETURNING, then read the row back: by the second statement the trigger has
+  // fired and the owner's membership makes the row visible.
+  const id = crypto.randomUUID();
+  const { error: insertError } = await supabase
+    .from('workspaces')
+    .insert({ id, name, owner_id: user.id });
+  if (insertError) throw new Error(`createWorkspace failed: ${insertError.message}`);
+
   const { data, error } = await supabase
     .from('workspaces')
-    .insert({ name, owner_id: user.id })
-    .select()
+    .select('*')
+    .eq('id', id)
     .single();
-  if (error) throw new Error(`createWorkspace failed: ${error.message}`);
+  if (error) throw new Error(`createWorkspace read-back failed: ${error.message}`);
   return data as WorkspaceRow;
 }
 
