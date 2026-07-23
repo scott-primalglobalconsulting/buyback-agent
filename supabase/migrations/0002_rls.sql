@@ -161,3 +161,38 @@ create policy sops_all on public.sops
         where ai.id = sops.audit_item_id)
     )
   );
+
+-- ---------------------------------------------------------------------------
+-- Owner-membership bootstrap.
+--   RLS creates a chicken-and-egg at workspace creation: an authenticated
+--   user may INSERT a workspace they own (workspaces_insert), but cannot then
+--   INSERT their own first workspace_members row — workspace_members_insert
+--   reads public.workspaces under RLS, and the just-created workspace is
+--   invisible to its owner until a membership row exists. Without this the
+--   owner is locked out of the workspace they just created.
+--
+--   This AFTER INSERT trigger closes the loop by seeding the creator as the
+--   'owner' member of the new workspace. SECURITY DEFINER so the seed insert
+--   is not itself blocked by RLS. It only ever grants the creator ownership of
+--   their OWN new workspace (from NEW.owner_id), so it adds no cross-workspace
+--   exposure. Makes createWorkspace a single authenticated insert regardless
+--   of which client performs it.
+-- ---------------------------------------------------------------------------
+create function public.seed_workspace_owner()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+begin
+  insert into public.workspace_members (workspace_id, user_id, role)
+  values (new.id, new.owner_id, 'owner')
+  on conflict (workspace_id, user_id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger workspaces_seed_owner
+  after insert on public.workspaces
+  for each row
+  execute function public.seed_workspace_owner();

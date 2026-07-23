@@ -1,6 +1,6 @@
 # Buyback Agent — Architecture
 
-Last updated: 2026-07-23 15:31 EST
+Last updated: 2026-07-23 15:41 EST
 
 ## Row-Level Security
 
@@ -69,6 +69,22 @@ creation time no membership row exists yet; ownership is the gate. The
 member-keyed ALL policies carry both `USING` and `WITH CHECK` so a member
 cannot write a child row into a workspace they don't belong to.
 
+### Owner-membership bootstrap (why the trigger exists)
+
+The member-keyed model has a chicken-and-egg at workspace creation: an
+authenticated user may INSERT a workspace they own, but cannot then INSERT
+their own first `workspace_members` row — `workspace_members_insert` reads
+`workspaces` under RLS, and the just-created workspace is invisible to its
+owner until a membership row exists. Left unaddressed, the creator is locked
+out of the workspace they just made.
+
+An `AFTER INSERT` trigger on `workspaces` (`seed_workspace_owner`, SECURITY
+DEFINER, `search_path = ''`) closes the loop: it seeds the creator as the
+`owner` member of the new workspace. It only ever inserts
+`(NEW.id, NEW.owner_id, 'owner')`, so it grants no cross-workspace access and
+adds no isolation exposure. This keeps `createWorkspace` a single authenticated
+insert regardless of which client performs it. Verified live below (userC).
+
 ## Cross-workspace isolation check
 
 This is the Phase 4 hard-gate evidence: a concrete transcript proving that a
@@ -85,15 +101,19 @@ begin;
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'usera@example.test'),
-  ('00000000-0000-0000-0000-00000000000b', 'userb@example.test');
+  ('00000000-0000-0000-0000-00000000000b', 'userb@example.test'),
+  ('00000000-0000-0000-0000-00000000000c', 'userc@example.test');
 
 insert into public.workspaces (id, name, owner_id) values
   ('00000000-0000-0000-0000-0000000000a1', 'Workspace A', '00000000-0000-0000-0000-00000000000a'),
   ('00000000-0000-0000-0000-0000000000b1', 'Workspace B', '00000000-0000-0000-0000-00000000000b');
 
+-- Owner memberships are auto-seeded by the seed_workspace_owner trigger; this
+-- explicit insert is an idempotent backstop.
 insert into public.workspace_members (workspace_id, user_id, role) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', 'owner'),
-  ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', 'owner');
+  ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000b', 'owner')
+on conflict (workspace_id, user_id) do nothing;
 
 insert into public.audits (id, workspace_id, created_by, title) values
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a', 'Audit A'),
@@ -122,6 +142,18 @@ insert into public.workspaces (name, owner_id)
   values ('userA second WS', '...00a');                -- self owner_id     -> SUCCESS
 reset role;
 
+-- bootstrap: userC creates a workspace via the authenticated client; the
+-- AFTER INSERT trigger seeds userC's owner membership so they are not locked out
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000c"}';
+insert into public.workspaces (id, name, owner_id)
+  values ('00000000-0000-0000-0000-0000000000c1', 'Workspace C', '...00c'); -- SUCCESS + trigger seeds membership
+select public.is_workspace_member('00000000-0000-0000-0000-0000000000c1');    -- expect t
+select id, name from public.workspaces where id = '00000000-0000-0000-0000-0000000000c1'; -- expect Workspace C
+select workspace_id, user_id, role from public.workspace_members
+  where workspace_id = '00000000-0000-0000-0000-0000000000c1';               -- expect userC/owner
+reset role;
+
 -- userB, symmetric
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b"}';
@@ -140,6 +172,10 @@ Applied to a fresh DB via `supabase db reset` (0001 + 0002), then run with:
 ```
 docker exec -i supabase_db_buyback-agent psql -U postgres -d postgres < .superpowers/sdd/rls-transcript.sql
 ```
+
+Run with `psql -q` (success-status lines suppressed; a successful write is
+proven by the absence of an error and the resulting state, a denied write by
+the `ERROR: new row violates row-level security policy` line under its label):
 
 ```text
 === userA: helper says member of wsA (expect t) ===
@@ -170,13 +206,27 @@ docker exec -i supabase_db_buyback-agent psql -U postgres -d postgres < .superpo
  00000000-0000-0000-0000-0000000000a1 | Workspace A
 (1 row)
 === userA INSERT audit into wsA (member) -- expect SUCCESS (INSERT 0 1) ===
-INSERT 0 1
 === userA INSERT audit into wsB (NOT member) -- expect DENIED by WITH CHECK ===
 ERROR:  new row violates row-level security policy for table "audits"
 === userA INSERT workspace owned by userB -- expect DENIED (owner_id != auth.uid) ===
 ERROR:  new row violates row-level security policy for table "workspaces"
 === userA INSERT workspace owned by self -- expect SUCCESS (INSERT 0 1) ===
-INSERT 0 1
+=== userC creates own workspace -- expect SUCCESS (INSERT 0 1), trigger seeds membership ===
+=== userC is now a member of their new workspace (expect t) ===
+ is_member_wsc
+---------------
+ t
+(1 row)
+=== userC sees their new workspace (expect 1 row: Workspace C) ===
+                  id                  |    name
+--------------------------------------+-------------
+ 00000000-0000-0000-0000-0000000000c1 | Workspace C
+(1 row)
+=== owner-membership row auto-seeded for userC (expect 1 row: userC/owner) ===
+             workspace_id             |               user_id                | role
+--------------------------------------+--------------------------------------+-------
+ 00000000-0000-0000-0000-0000000000c1 | 00000000-0000-0000-0000-00000000000c | owner
+(1 row)
 === userB sees only workspace B audit (expect 1 row: Audit B) ===
                   id                  |             workspace_id             |  title
 --------------------------------------+--------------------------------------+---------
@@ -189,7 +239,9 @@ INSERT 0 1
 ```
 
 **Result:** read isolation holds both directions (each user sees only their
-workspace's rows; explicit cross-workspace reads return 0 rows), and the
-write-path `WITH CHECK` clauses deny both a cross-workspace child insert and a
-foreign-owner workspace insert while allowing the legitimate in-workspace and
-self-owned writes. Cross-workspace isolation is verified, not asserted.
+workspace's rows; explicit cross-workspace reads return 0 rows); the write-path
+`WITH CHECK` clauses deny a cross-workspace child insert and a foreign-owner
+workspace insert while allowing legitimate in-workspace and self-owned writes;
+and the `seed_workspace_owner` trigger correctly bootstraps userC's membership
+so a freshly-created workspace is immediately usable by its owner.
+Cross-workspace isolation is verified, not asserted.
