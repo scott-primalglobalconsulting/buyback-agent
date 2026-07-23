@@ -88,6 +88,27 @@ describe('ReplacementLadder', () => {
     expect(html).toMatch(/class="rung on"[\s\S]*?Delivery/);
     expect(html).toMatch(/class="rung off"[\s\S]*?Admin/);
   });
+
+  it('degrades to no lit rung and a note when firstHireRole is null', () => {
+    const html = renderToStaticMarkup(
+      <ReplacementLadder firstHireRole={null} justification="ignored" />,
+    );
+    expect(html).not.toContain('class="rung on"');
+    expect(html).not.toContain('Hire first');
+    expect(html).toContain('No recommendation recorded.');
+    expect(html).not.toContain('ignored'); // justification omitted with no rec
+  });
+});
+
+describe('BuybackRate null first hire', () => {
+  it('keeps the buyback % and reclaimable stat but omits the first-hire stat', () => {
+    const html = renderToStaticMarkup(
+      <BuybackRate items={FIXTURE.items} firstHireRole={null} />,
+    );
+    expect(html).toContain('50%'); // buyback rate still shown
+    expect(html).toContain('of 40 hrs/wk'); // reclaimable stat still shown
+    expect(html).not.toContain('First hire'); // first-hire stat omitted
+  });
 });
 
 describe('TopTasks', () => {

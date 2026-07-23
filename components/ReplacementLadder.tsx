@@ -10,11 +10,15 @@ function cap(role: string) {
 // as a vertical ladder. The recommended firstHireRole is lit in cobalt at its
 // rung with the justification; the rest are dimmed. Rendered column-reversed so
 // admin (rung 01, hire first) sits at the bottom of the ladder.
+//
+// firstHireRole is nullable: persisted audits from before migration 0004 carry
+// no summary. When null, no rung is lit and the panel shows a "no recommendation
+// recorded" note instead of the highlighted hire, rather than crashing.
 export function ReplacementLadder({
   firstHireRole,
   justification,
 }: {
-  firstHireRole: HireRole;
+  firstHireRole: HireRole | null;
   justification: string;
 }) {
   return (
@@ -36,13 +40,13 @@ export function ReplacementLadder({
         })}
       </ol>
       <div className="rep-why">
-        <h3>{cap(firstHireRole)}, first.</h3>
+        <h3>{firstHireRole ? `${cap(firstHireRole)}, first.` : 'No recommendation recorded.'}</h3>
         <p>
           The ladder is fixed: admin, delivery, marketing, sales, leadership. You
           climb it only when the rung below is covered. The agent picks the
           earliest rung that unloads the most hours.
         </p>
-        <div className="just">{justification}</div>
+        {firstHireRole ? <div className="just">{justification}</div> : null}
       </div>
     </div>
   );

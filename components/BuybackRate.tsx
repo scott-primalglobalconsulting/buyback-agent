@@ -14,12 +14,16 @@ function cap(role: string) {
 // display face + cobalt. No dollar rate: the mockup's "$62/hr" was illustrative
 // and does not match the code. All math comes from lib/buyback. The two support
 // stats are reclaimable hrs/wk and the recommended first hire (design-system.md).
+//
+// firstHireRole is nullable: persisted audits from before migration 0004 carry
+// no summary. When null, the first-hire stat is omitted (the buyback % and
+// reclaimable hours stay) rather than crashing.
 export function BuybackRate({
   items,
   firstHireRole,
 }: {
   items: ScoredItem[];
-  firstHireRole: HireRole;
+  firstHireRole: HireRole | null;
 }) {
   const pct = Math.round(buybackRate(items) * 100);
   const rollup = quadrantHourRollup(items);
@@ -44,10 +48,12 @@ export function BuybackRate({
           </div>
           <div className="k">Reclaimable now</div>
         </div>
-        <div className="stat">
-          <div className="n">{cap(firstHireRole)}</div>
-          <div className="k">First hire</div>
-        </div>
+        {firstHireRole ? (
+          <div className="stat">
+            <div className="n">{cap(firstHireRole)}</div>
+            <div className="k">First hire</div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
