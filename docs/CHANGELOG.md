@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+### Task 4.2 — RLS policies + membership helper (2026-07-23)
+
+- Added `supabase/migrations/0002_rls.sql`: enables RLS on all five tables
+  and adds membership-keyed policies. All checks funnel through a SECURITY
+  DEFINER helper `is_workspace_member(uuid)` hardened with `search_path = ''`
+  and schema-qualified refs; definer so the membership lookup isn't blocked
+  by RLS on `workspace_members`.
+  - `workspaces`: member-keyed SELECT/UPDATE/DELETE, owner-gated INSERT.
+  - `workspace_members`: member SELECT, owner-only INSERT/DELETE.
+  - `audits`/`audit_items`/`sops`: ALL gated on membership of the owning
+    workspace (child tables join upward), USING + WITH CHECK.
+- Added `docs/ARCHITECTURE.md`: membership-keyed RLS model, security-definer
+  rationale, policy summary, and the cross-workspace isolation transcript
+  (captured live-DB output pending — controller runs it as Gate 4 evidence).
+- Added `.superpowers/sdd/rls-transcript.sql` (gitignored; mirrored verbatim
+  into `docs/ARCHITECTURE.md`): adversarial, self-contained, rolled-back
+  transcript proving userA cannot read workspace B's audit while in-workspace
+  rows stay visible.
+- Updated `docs/architecture/migrations.md`: `0002_rls.sql` moved to Landed;
+  isolation check now points to `ARCHITECTURE.md`.
+- Verified `npm test` (21 passing), `npm run typecheck`, `npm run lint` green.
+  DB not applied here — the controller applies the migration and runs the
+  transcript against the live local Supabase.
+
 ### Task 4.1 — Initial schema migration (2026-07-23)
 
 - Added `supabase/migrations/0001_init.sql`: `pgcrypto` extension plus five
