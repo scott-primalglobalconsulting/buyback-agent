@@ -83,7 +83,7 @@ describe('POST /api/analyze — demo path', () => {
     assertNoAgentCall();
   });
 
-  it('streams the cached result (thinking replay + result) with no API call', async () => {
+  it('streams the cached result ONLY (no fabricated thinking) with no API call', async () => {
     vi.mocked(getSessionUserId).mockResolvedValue(null);
     vi.mocked(incrDemoRate).mockResolvedValue(1);
     vi.mocked(getSampleCache).mockResolvedValue({ resultJson: CACHED_RESULT, ageMs: 1000 });
@@ -94,7 +94,8 @@ describe('POST /api/analyze — demo path', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/event-stream');
     const text = await res.text();
-    expect(text).toContain('"type":"thinking"');
+    // Honest states: cache-serve emits the genuine result and NO thinking theater.
+    expect(text).not.toContain('"type":"thinking"');
     expect(text).toContain('"type":"result"');
     expect(text).toContain('Bookkeeping & reconciliation');
     assertNoAgentCall();

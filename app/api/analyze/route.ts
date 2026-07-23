@@ -34,8 +34,9 @@ import { SAMPLE_WEEK } from '@/lib/sample';
 //   { type: 'result',   result: AnalysisResult } — the final validated result (1)
 //   { type: 'error',    message: string } — terminal failure; no result follows
 // A well-formed stream is: zero or more `thinking`, then exactly one `result`;
-// or, on failure, an `error`. Cached responses replay a short canned thinking
-// log then emit `result` — no API call is made.
+// or, on failure, an `error`. Cached responses emit ONLY the validated `result`
+// (no fabricated thinking) — no API call is made. The `thinking` event type
+// stays defined for the live path and future use; the client owns the reveal.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const runtime = 'nodejs';
@@ -62,16 +63,6 @@ const SSE_HEADERS = {
   'Cache-Control': 'no-cache, no-transform',
   Connection: 'keep-alive',
 } as const;
-
-// A friendly, canned thinking log replayed before a CACHED result so the client
-// UX is identical to a live run. This is not model output — it is a fixed
-// script; the result that follows is genuine cached data.
-const CACHE_REPLAY_LOG = [
-  'Loading the latest analysis of this week…',
-  'Scoring each task into its DRIP quadrant…',
-  'Ranking by value tier and delegation cost…',
-  'Recommending the first hire…',
-];
 
 const GENERIC_ERROR = 'Analysis failed. Please try again in a moment.';
 
@@ -144,9 +135,9 @@ async function handleDemo(req: Request): Promise<Response> {
   switch (verdict.kind) {
     case 'serve_cache':
     case 'breaker_serve_cache':
-      // Fresh cache or breaker-tripped-with-cache: replay a short log then emit
-      // the genuine cached result. NO API call. decideDemo only returns these
-      // when a cache row exists, so `cache` is non-null here.
+      // Fresh cache or breaker-tripped-with-cache: emit the genuine cached
+      // result (no fabricated thinking). NO API call. decideDemo only returns
+      // these when a cache row exists, so `cache` is non-null here.
       return sseResponse(cacheReplayStream(cache!.resultJson));
 
     case 'rate_limited':
@@ -205,19 +196,16 @@ async function* demoLiveStream(): AsyncGenerator<SseEvent> {
   }
 }
 
-// Replay the canned thinking log, then emit the cached result. No API call.
-// Re-validate the DB row against AnalysisResultSchema before streaming it: a
-// cache row is persisted data that could be stale-shaped or corrupt, and we
-// must never stream malformed data to the client as a genuine `result`. On a
-// validation miss, emit an error event instead.
+// Emit the cached result. No API call, and no fabricated thinking — the client
+// owns the reveal animation. Re-validate the DB row against AnalysisResultSchema
+// before streaming it: a cache row is persisted data that could be stale-shaped
+// or corrupt, and we must never stream malformed data to the client as a genuine
+// `result`. On a validation miss, emit an error event instead.
 async function* cacheReplayStream(resultJson: unknown): AsyncGenerator<SseEvent> {
   const parsed = AnalysisResultSchema.safeParse(resultJson);
   if (!parsed.success) {
     yield { type: 'error', message: GENERIC_ERROR };
     return;
-  }
-  for (const text of CACHE_REPLAY_LOG) {
-    yield { type: 'thinking', text };
   }
   yield { type: 'result', result: parsed.data };
 }

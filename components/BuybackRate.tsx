@@ -1,12 +1,26 @@
 import type { ScoredItem } from "@/lib/buyback/types";
 import { buybackRate } from "@/lib/buyback/rate";
 import { quadrantHourRollup } from "@/lib/buyback/rollups";
+import { HIRE_ROLES } from "@/lib/agent/schema";
+
+type HireRole = (typeof HIRE_ROLES)[number];
+
+function cap(role: string) {
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
 
 // The number the product turns on. buybackRate() returns a 0..1 fraction — the
 // reclaimable share of the week — rendered here as a percent hero figure in the
 // display face + cobalt. No dollar rate: the mockup's "$62/hr" was illustrative
-// and does not match the code. All math comes from lib/buyback.
-export function BuybackRate({ items }: { items: ScoredItem[] }) {
+// and does not match the code. All math comes from lib/buyback. The two support
+// stats are reclaimable hrs/wk and the recommended first hire (design-system.md).
+export function BuybackRate({
+  items,
+  firstHireRole,
+}: {
+  items: ScoredItem[];
+  firstHireRole: HireRole;
+}) {
   const pct = Math.round(buybackRate(items) * 100);
   const rollup = quadrantHourRollup(items);
   const reclaimable = rollup.Delegate + rollup.Replace;
@@ -31,8 +45,8 @@ export function BuybackRate({ items }: { items: ScoredItem[] }) {
           <div className="k">Reclaimable now</div>
         </div>
         <div className="stat">
-          <div className="n tnum">{total}</div>
-          <div className="k">Total logged</div>
+          <div className="n">{cap(firstHireRole)}</div>
+          <div className="k">First hire</div>
         </div>
       </div>
     </div>

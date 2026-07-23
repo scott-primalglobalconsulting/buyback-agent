@@ -29,21 +29,28 @@ const FIXTURE: AnalysisResult = {
 };
 
 describe('BuybackRate', () => {
-  it('renders the fraction as a 50% hero and the reclaimable/total hours', () => {
-    const html = renderToStaticMarkup(<BuybackRate items={FIXTURE.items} />);
+  it('renders the fraction as a 50% hero, reclaimable hours, and the first hire', () => {
+    const html = renderToStaticMarkup(
+      <BuybackRate items={FIXTURE.items} firstHireRole={FIXTURE.summary.firstHireRole} />,
+    );
     expect(html).toContain('50%');
     expect(html).toContain('of 40 hrs/wk');
     expect(html).toContain('>20<'); // reclaimable = Delegate 15 + Replace 5
     expect(html).not.toContain('$62'); // no dollar rate
+    // Second support stat is the first hire, not a total-logged figure.
+    expect(html).toContain('First hire');
+    expect(html).toContain('Admin');
+    expect(html).not.toContain('Total logged');
   });
 });
 
 describe('DripDashboard', () => {
   it('renders the per-quadrant hours from the rollup', () => {
     const html = renderToStaticMarkup(<DripDashboard items={FIXTURE.items} />);
-    // Delegate 15, Replace 5, Invest 7, Produce 13 hrs/wk
+    // Delegate 15, Replace 5, Invest 7, Produce 13 hrs/wk. Anchor Replace=5 with
+    // a leading `>` so it cannot match Delegate's "15" as a substring.
     expect(html).toMatch(/15<small> hrs\/wk/);
-    expect(html).toMatch(/5<small> hrs\/wk/);
+    expect(html).toMatch(/>5<small> hrs\/wk/);
     expect(html).toMatch(/7<small> hrs\/wk/);
     expect(html).toMatch(/13<small> hrs\/wk/);
     // Shed = 20, Keep = 20 brackets
