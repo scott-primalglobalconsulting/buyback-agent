@@ -71,4 +71,6 @@ npm run eval        # tsx evals/run.ts — calls the live Anthropic API, not in 
   seed data.
 - `docs/architecture/migrations.md` — migration catalog + RLS isolation
   checks.
+- `docs/architecture/design-system.md` — Phase 5 UI source of truth: color
+  tokens (both themes), type pairing, DRIP/viz treatments, state inventory.
 - `docs/CHANGELOG.md` — per-task changelog.

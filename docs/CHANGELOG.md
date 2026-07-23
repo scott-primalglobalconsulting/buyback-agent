@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Phase 5 kickoff — design system (2026-07-23)
+
+- Brainstormed the Phase 5 UI direction (anti-"AI slop" mandate). Operator
+  decisions: (a) owned Tailwind v4 tokens + self-hosted type pairing + Lucide +
+  Radix primitives à la carte (no component-kit theme) — resolves the pending
+  component-library Open Decision; (b) build a design-direction Artifact proof
+  before app code; (c) fully owned identity, not Martell brand trade dress
+  (disclaimer stands); (d) warmer neutrals + cobalt chrome accent + tinted DRIP
+  washes for more color without breaking "color means data".
+- Added `docs/architecture/design-system.md` as the Phase 5 UI source of truth:
+  color tokens (light/dark, cobalt `--accent` verified AA), DRIP categorical
+  palette (validated via the dataviz `validate_palette.js`, both modes; CVD
+  floor pair carried by direct labels + spatial buckets), sequential ramp,
+  reserved status colors, Instrument Serif / IBM Plex Sans / IBM Plex Mono
+  pairing, hand-built viz treatments, and the full guard-state inventory.
+- Internal design-direction proof (private Artifact, not for release):
+  `https://claude.ai/code/artifact/d855a59d-493a-469f-b27a-1f507eae68b9`.
+- No app code or dependencies yet. Radix/Lucide install gated to Task 5.2 with
+  explicit operator approval.
+
 ### Task 4.4 — Abuse-guard: pure policy + demo counters/cache (2026-07-23)
 
 - Added `lib/guard/policy.ts` (PURE — no React/Next/Supabase/I/O/clock):
