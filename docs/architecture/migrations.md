@@ -1,16 +1,20 @@
 # Migrations Catalog
 
-Last updated: 2026-07-23 13:05 MST
+Last updated: 2026-07-23 15:18 EST
 
-No migrations exist yet as of Task 1.3 (Phase 1 — scaffold + CI). This file
-is the running catalog; each entry is added when its migration lands in
-Phase 4 (Data layer) and Phase 4.4 (abuse guard).
+This file is the running catalog; each entry is added when its migration
+lands in Phase 4 (Data layer) and Phase 4.4 (abuse guard).
+
+## Landed
+
+| File | Purpose | RLS |
+|---|---|---|
+| `0001_init.sql` | `workspaces`, `workspace_members`, `audits`, `audit_items`, `sops` (+ `pgcrypto` extension for `gen_random_uuid()`) | Not enabled here — schema only; RLS enablement + policies deferred to `0002_rls.sql` |
 
 ## Planned
 
 | File | Purpose | RLS |
 |---|---|---|
-| `0001_init.sql` | `workspaces`, `workspace_members`, `audits`, `audit_items`, `sops` | Enabled, policies in `0002_rls.sql` |
 | `0002_rls.sql` | RLS policies + workspace-membership helper function | Row visible/writable only to members of the owning workspace |
 | `0003_abuse_guard.sql` | `demo_cache`, `demo_rate`, `demo_budget` | Enabled, deny-all (no anon/authenticated policies) — only the service-role key reads/writes, so no browser or logged-in user can touch or scrape them |
 
