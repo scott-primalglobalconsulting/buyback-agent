@@ -2,9 +2,13 @@
 // (audits_all / audit_items_all key off workspace membership); the `.eq()`
 // filters below are row selection, not authorization.
 import 'server-only';
-import { ScoredItemSchema, type ScoredItem } from '@/lib/agent/schema';
+import {
+  ScoredItemSchema,
+  type ScoredItem,
+  type AnalysisSummary,
+} from '@/lib/agent/schema';
 import { createServerClient } from './client';
-import type { AuditItemRow, AuditRow, AuditWithItems } from './types';
+import type { AuditItemRow, AuditRow, AuditItemWithId, AuditWithItems } from './types';
 
 // Map a persisted audit_items row to the validated camelCase domain type.
 // The DB columns are NULLABLE (schema 0001) but ScoredItemSchema requires them
@@ -23,6 +27,21 @@ function rowToScoredItem(row: AuditItemRow): ScoredItem {
   });
 }
 
+// Wrap the validated ScoredItem with its persisted row id. The id lives outside
+// the Zod parse so ScoredItemSchema stays a pure domain shape.
+function rowToItemWithId(row: AuditItemRow): AuditItemWithId {
+  return { id: row.id, ...rowToScoredItem(row) };
+}
+
+// Read the LLM-judged first-hire summary off an audit row. Columns are nullable
+// (migration 0004; pre-0004 audits have none), so the fields pass through as-is.
+function rowToSummary(row: AuditRow): AuditWithItems['summary'] {
+  return {
+    firstHireRole: row.first_hire_role,
+    firstHireJustification: row.first_hire_justification,
+  };
+}
+
 // Insert the audit, then its items. created_by is set for provenance; RLS gates
 // on workspace membership, not created_by. workspace_id on both inserts is
 // checked by the audits_all / audit_items_all WITH CHECK clauses.
@@ -30,6 +49,7 @@ export async function createAudit(
   workspaceId: string,
   title: string,
   items: ScoredItem[],
+  summary?: AnalysisSummary,
 ): Promise<AuditWithItems> {
   const supabase = await createServerClient();
   const {
@@ -38,7 +58,13 @@ export async function createAudit(
 
   const { data: audit, error: auditError } = await supabase
     .from('audits')
-    .insert({ workspace_id: workspaceId, title, created_by: user?.id ?? null })
+    .insert({
+      workspace_id: workspaceId,
+      title,
+      created_by: user?.id ?? null,
+      first_hire_role: summary?.firstHireRole ?? null,
+      first_hire_justification: summary?.firstHireJustification ?? null,
+    })
     .select()
     .single();
   if (auditError || !audit) {
@@ -65,7 +91,8 @@ export async function createAudit(
 
   return {
     ...auditRow,
-    items: ((insertedItems ?? []) as AuditItemRow[]).map(rowToScoredItem),
+    items: ((insertedItems ?? []) as AuditItemRow[]).map(rowToItemWithId),
+    summary: rowToSummary(auditRow),
   };
 }
 
@@ -87,9 +114,11 @@ export async function getAudit(id: string): Promise<AuditWithItems | null> {
     .eq('audit_id', id);
   if (itemsError) throw new Error(`getAudit items failed: ${itemsError.message}`);
 
+  const auditRow = audit as AuditRow;
   return {
-    ...(audit as AuditRow),
-    items: ((items ?? []) as AuditItemRow[]).map(rowToScoredItem),
+    ...auditRow,
+    items: ((items ?? []) as AuditItemRow[]).map(rowToItemWithId),
+    summary: rowToSummary(auditRow),
   };
 }
 

@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+### Task 5.3b — Persist audit summary + getAudit item ids + auth hardening (2026-07-23)
+
+- **Migration `0004_audit_summary.sql`:** additive nullable `first_hire_role` /
+  `first_hire_justification` columns on `audits` to persist the LLM-judged
+  first-hire recommendation for the audit-detail page (5.3c). **No RLS change** —
+  the existing `audits_all` row policy (`0002_rls.sql`) already gates these
+  columns; no column-level grants, no cross-workspace isolation impact. Not
+  applied by the agent (DB holds live data); awaits controller apply. Catalogued
+  in `docs/architecture/migrations.md`.
+- **Data layer:** `AuditRow` gains the two columns. New `AuditItemWithId =
+  ScoredItem & { id: string }`; `AuditWithItems.items` is now `AuditItemWithId[]`
+  and carries `summary: { firstHireRole, firstHireJustification }` (both nullable
+  for pre-0004 audits). `createAudit` takes an optional `summary` param
+  (`AnalysisSummary`) and persists it; `getAudit` returns item ids + summary.
+  `rowToScoredItem` unchanged (still the Zod domain parse) — the id is wrapped on
+  after the parse, keeping `ScoredItemSchema` a pure domain shape.
+- **Auth hardening (5.3a review follow-ups):** workspace bootstrap moved out of
+  `app/app/layout.tsx` into `app/auth/callback/route.ts` (runs once per sign-in,
+  closes the concurrent double-create window; bootstrap failure is logged, not a
+  500). Added session-refresh `middleware.ts` (root) delegating to
+  `lib/db/middleware.ts` (`updateSession`, canonical `@supabase/ssr` getAll/setAll
+  pattern, `getUser()` refresh) with a matcher excluding Next internals + static
+  assets. Supabase construction stays inside `lib/db` (isolation).
+- Suite 46 tests green; typecheck + lint clean. No live-DB unit harness exists
+  for the db layer (typecheck is the gate); 5.3c exercises `createAudit`/
+  `getAudit` against the live DB.
+
 ### Task 5.2 — Landing + streaming demo path + presentational UI (2026-07-23)
 
 - **Design foundation (5.2a, `eb1247d`):** `app/globals.css` token system ported

@@ -1,6 +1,6 @@
 # Migrations Catalog
 
-Last updated: 2026-07-23 16:00 EST
+Last updated: 2026-07-23 18:33 EST
 
 This file is the running catalog; each entry is added when its migration
 lands in Phase 4 (Data layer) and Phase 4.4 (abuse guard).
@@ -12,11 +12,14 @@ lands in Phase 4 (Data layer) and Phase 4.4 (abuse guard).
 | `0001_init.sql` | `workspaces`, `workspace_members`, `audits`, `audit_items`, `sops` (+ `pgcrypto` extension for `gen_random_uuid()`) | Not enabled here — schema only; RLS enablement + policies deferred to `0002_rls.sql` |
 | `0002_rls.sql` | RLS policies + workspace-membership helper function (`is_workspace_member`, SECURITY DEFINER) | Row visible/writable only to members of the owning workspace |
 | `0003_abuse_guard.sql` | `demo_cache`, `demo_rate`, `demo_budget` (+ atomic `incr_demo_rate` / `incr_daily_live_count` RPCs, `search_path = ''`) | Enabled, deny-all (no anon/authenticated policies) — only the service-role key reads/writes, so no browser or logged-in user can touch or scrape them. **Live deny-all verification pending controller apply at Gate 4.** |
+| `0004_audit_summary.sql` | Adds `first_hire_role` and `first_hire_justification` (both `text`, NULLABLE) to `audits` to persist the LLM-judged first-hire recommendation for the audit-detail page | **No RLS change.** Additive nullable columns only; RLS on `audits` (enabled + policed by `0002_rls.sql`'s `audits_all` via `is_workspace_member`) already gates reads/writes at the row level, and no column-level grants are used. No cross-workspace isolation impact — a member still sees only their workspace's audit rows, now including these two columns. Existing audit rows keep NULL for both (no backfill). |
 
 ## Planned
 
-_None — all Phase 4 migrations authored. `0003` awaits controller apply +
-Gate 4 deny-all transcript._
+_`0003` awaits controller apply + Gate 4 deny-all transcript. `0004` (additive
+nullable columns, no RLS change) is authored in Task 5.3b and awaits controller
+apply against the running DB — not applied by the implementing agent, since the
+DB holds live data._
 
 ## Cross-workspace isolation check
 

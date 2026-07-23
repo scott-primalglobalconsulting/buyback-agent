@@ -9,6 +9,7 @@
 // with no divergence from the lib/db seam.
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/db/client';
+import { listWorkspacesForUser, createWorkspace } from '@/lib/db/workspaces';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -23,6 +24,20 @@ export async function GET(request: Request) {
 
   if (error) {
     return NextResponse.redirect(`${origin}/sign-in?error=exchange_failed`);
+  }
+
+  // First-sign-in bootstrap: guarantee at least one workspace exists. Runs once
+  // per sign-in here (moved out of the /app layout) so concurrent renders can't
+  // race to double-create. A bootstrap failure must NOT 500 the callback — the
+  // session is already established; log and still land the user in /app, where
+  // a later request can retry.
+  try {
+    const workspaces = await listWorkspacesForUser();
+    if (workspaces.length === 0) {
+      await createWorkspace('Personal Workspace');
+    }
+  } catch (bootstrapError) {
+    console.error('auth callback workspace bootstrap failed:', bootstrapError);
   }
 
   return NextResponse.redirect(`${origin}/app`);
