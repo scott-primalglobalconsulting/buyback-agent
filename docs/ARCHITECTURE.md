@@ -1,6 +1,6 @@
 # Buyback Agent — Architecture
 
-Last updated: 2026-07-23 16:03 EST
+Last updated: 2026-07-23 16:14 EST
 
 ## Row-Level Security
 
@@ -253,12 +253,27 @@ anonymous `/demo` cost controls (sample cache, per-IP rate limit, daily API
 budget breaker). They carry no user data and must be invisible to browsers and
 logged-in users alike — a client that could read them could time an attack
 around the budget, and one that could write them could forge a fresh cache or
-zero the breaker. `0003_abuse_guard.sql` enables RLS on all three and creates
-**no policies at all**, so anon/authenticated get deny-all; only the
-RLS-exempt service role (used solely by `lib/db/guard.ts`) reads or writes
-them. Writes to the counters go through two `SECURITY DEFINER`
-`INSERT .. ON CONFLICT DO UPDATE` RPCs so concurrent requests serialize on the
-conflicting row and the returned count is exact.
+zero the breaker. Two independent locks enforce this:
+
+1. **RLS deny-all.** `0003_abuse_guard.sql` enables RLS on all three tables and
+   creates **no policies at all**, so anon/authenticated are denied every row.
+2. **Table-privilege revoke (defense-in-depth).** Supabase's defaults grant
+   anon/authenticated full DML on public tables, so the migration also
+   `REVOKE ALL ON demo_* FROM anon, authenticated`. The counter RPCs
+   (`incr_demo_rate`, `incr_daily_live_count`) are `SECURITY INVOKER` — chosen
+   deliberately over `DEFINER` so an anon/authenticated caller runs the INSERT
+   as itself and, lacking table privileges, is denied. Only the RLS-exempt
+   service role (used solely by `lib/db/guard.ts`) reaches these tables.
+
+The counter writes go through two `INSERT .. ON CONFLICT DO UPDATE .. RETURNING`
+RPCs so concurrent requests serialize on the conflicting row and the returned
+count is exact; `window_start`/`day` are derived server-side from `now()` so a
+client cannot forge or spread buckets.
+
+(Note: we intentionally do NOT also revoke function `EXECUTE` from `PUBLIC` — the
+functions stay callable, but the table revoke already denies the write. Adding a
+PUBLIC `EXECUTE` revoke reproducibly crashed the local Postgres backend on an
+anon call, for zero added protection.)
 
 Verified live (`supabase db reset` applies `0001`–`0003` cleanly, then probed):
 
@@ -269,16 +284,18 @@ Verified live (`supabase db reset` applies `0001`–`0003` cleanly, then probed)
  demo_budget | t           |        0
  demo_cache  | t           |        0
  demo_rate   | t           |        0
+=== demo_* table grants for anon/authenticated (expect 0) === -> 0
+=== incr_* functions: SECURITY INVOKER (prosecdef=f) ===
 
--- seeded cache='sample' and budget=42 as superuser, then:
-ANON        read demo_cache -> 0 rows,  demo_budget -> 0 rows      (deny-all)
-AUTHENTICATED read demo_cache -> 0 rows, demo_budget -> 0 rows     (deny-all)
-AUTHENTICATED insert demo_budget (zero the breaker)
-            -> ERROR: new row violates row-level security policy   (write denied)
-SERVICE_ROLE read demo_cache -> 1, demo_budget.live_count -> 42; update -> 99  (full access)
-=== atomic RPCs (service_role): incr_demo_rate x2 -> 1 then 2; incr_daily_live_count -> 1 ===
+-- as anon:
+ANON  select demo_cache          -> ERROR: permission denied for table demo_cache
+ANON  call incr_demo_rate('x')   -> ERROR: permission denied for table demo_rate
+-- as service_role (RLS-exempt, retains grants):
+SERVICE_ROLE read/write demo_cache + demo_budget -> full access
+SERVICE_ROLE incr_demo_rate / incr_daily_live_count -> atomic, exact returned count
 ```
 
-The tables are unreadable and unwritable by anon and authenticated, reachable
-only by the service role, and the counter RPCs increment atomically. Verified,
+Anon and authenticated can neither read nor write the tables nor increment the
+counters (denied at the table-privilege layer, behind RLS deny-all); only the
+service role reaches them, and the counter RPCs increment atomically. Verified,
 not asserted.

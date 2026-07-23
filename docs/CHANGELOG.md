@@ -24,8 +24,22 @@
   guard file touching Supabase — `getSampleCache`, `putSampleCache`,
   `incrDemoRate` (via RPC), `getDailyLiveCount`, `incrDailyLiveCount` (via
   RPC). Raw IP never reaches lib/db; the route passes a pre-hashed `ipHash`.
-- Not applied here — the controller applies `0003` and captures the fresh-DB
-  reset + RLS deny-all transcript at Gate 4.
+- Applied and verified live by the controller at Gate 4: all of `0001`–`0003`
+  apply cleanly; deny-all confirmed (anon/authenticated denied read + write on
+  all three tables; service role full access; RPCs increment atomically).
+  Evidence in `docs/ARCHITECTURE.md`.
+- **Review follow-ups (controller):**
+  - The counter RPCs are `SECURITY INVOKER` (not DEFINER — the initial note was
+    wrong). Invoker is the safer choice: an anon/authenticated caller runs the
+    INSERT as itself and is blocked, so only the service role can increment.
+  - Defense-in-depth: added `REVOKE ALL ON demo_* FROM anon, authenticated` so
+    the deny-all does not rely on RLS alone (anon now gets "permission denied
+    for table", a hard privilege denial). Did NOT revoke function EXECUTE from
+    PUBLIC — that reproducibly crashed the local Postgres backend for zero added
+    protection (the table revoke already denies the write).
+  - `incrDailyLiveCount` now returns the post-increment count (was `void`) so
+    the Phase-5 route can enforce the breaker on the returned value
+    (increment-then-check) instead of a racy read-then-increment.
 
 ### Task 4.3 — Typed RLS-aware Supabase query layer (2026-07-23)
 

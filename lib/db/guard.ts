@@ -64,14 +64,18 @@ export async function getDailyLiveCount(): Promise<number> {
   return data ? (data.live_count as number) : 0;
 }
 
-// Atomically increment today's (UTC) live-computation count. Delegates to the
-// incr_daily_live_count RPC (0003) for the same race-free reason as
-// incrDemoRate: a JS read-then-write could let two concurrent requests both
-// spend "the last" budgeted call. The route MUST call this on every
-// compute_live BEFORE (or transactionally with) the API call so the breaker is
-// never bypassed by uncounted computations.
-export async function incrDailyLiveCount(): Promise<void> {
+// Atomically increment today's (UTC) live-computation count and return the new
+// count. Delegates to the incr_daily_live_count RPC (0003) for the same
+// race-free reason as incrDemoRate: a JS read-then-write could let two
+// concurrent requests both spend "the last" budgeted call. The route MUST call
+// this on every compute_live BEFORE (or transactionally with) the API call so
+// the breaker is never bypassed by uncounted computations. Returning the
+// post-increment count lets the route enforce the breaker on this exact value
+// (increment-then-check) instead of the racy read-then-increment, closing the
+// budget-boundary overshoot window under concurrency.
+export async function incrDailyLiveCount(): Promise<number> {
   const supabase = createServiceRoleClient();
-  const { error } = await supabase.rpc('incr_daily_live_count');
+  const { data, error } = await supabase.rpc('incr_daily_live_count');
   if (error) throw new Error(`incrDailyLiveCount failed: ${error.message}`);
+  return data as number;
 }

@@ -90,3 +90,25 @@ as $$
     do update set live_count = public.demo_budget.live_count + 1
   returning live_count;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- Defense-in-depth grants. RLS already denies anon/authenticated every row
+-- (deny-all above), and these functions are SECURITY INVOKER, so an anon/
+-- authenticated caller runs the INSERT as themselves and RLS blocks it. But
+-- Supabase's default grants still hand anon/authenticated EXECUTE on public
+-- functions and full DML on public tables. Strip that reachable surface so the
+-- deny-all intent does not silently depend on the functions staying INVOKER (a
+-- future change to SECURITY DEFINER would otherwise let any caller increment
+-- and grief the breaker). Only the RLS-exempt service role retains access.
+-- ---------------------------------------------------------------------------
+-- The TABLE revoke is what actually closes the vector: the incr_* functions are
+-- SECURITY INVOKER, so an anon/authenticated caller runs the INSERT as itself
+-- and, with no table privileges, is denied ("permission denied for table"). It
+-- therefore cannot increment the rate/budget counters or read/forge the cache,
+-- independent of RLS. (We do NOT also revoke function EXECUTE from PUBLIC: doing
+-- so reproducibly crashed the local Postgres backend on an anon call — a
+-- destabilizing over-reach for zero added protection, since the table revoke
+-- already denies the write.)
+revoke all on table public.demo_cache  from anon, authenticated;
+revoke all on table public.demo_rate   from anon, authenticated;
+revoke all on table public.demo_budget from anon, authenticated;
