@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+### Task 4.3 — Typed RLS-aware Supabase query layer (2026-07-23)
+
+- Added `lib/db/`: `types.ts` (row types, exact match to `0001_init.sql`),
+  `client.ts` (server-only: cookie-bound `createServerClient` + service-role
+  `createServiceRoleClient`), `browser-client.ts` (client-safe anon client),
+  `workspaces.ts` / `audits.ts` / `sops.ts` (RLS-authorized queries, no manual
+  user filters), `index.ts` (server-only barrel).
+- **Bundle safety:** `import 'server-only'` guards `client.ts` + the three
+  query modules; the service-role key and `next/headers` never reach a client
+  bundle. Browser path is physically separate. Enforced by Next's `server-only`
+  webpack alias (confirmed in review).
+- `audit_items` rows are mapped to the domain `ScoredItem` via
+  `ScoredItemSchema.parse` at the boundary, so nullable DB columns throw a
+  clear error instead of yielding an invalid `ScoredItem` (finding 4.1-m2).
+- `createWorkspace` is a single authenticated insert; the owner's membership is
+  seeded by the `seed_workspace_owner` trigger (finding M1).
+- **Fix (review-found, live-verified):** `createWorkspace` cannot use
+  `.insert().select()` — the RETURNING projection is filtered by
+  `workspaces_select` while the owner's membership is seeded by an AFTER INSERT
+  trigger not yet in effect, so it throws despite a successful insert. Changed
+  to app-supplied id + insert-without-RETURNING + read-back by id. Verified
+  against the live local Postgres.
+- Verified `npm run typecheck`, `npm run lint`, `npm test` (21) green. No unit
+  tests (typecheck-gated; runtime exercise deferred to Phase 5).
+
 ### Task 4.2 — RLS policies + membership helper (2026-07-23)
 
 - Added `supabase/migrations/0002_rls.sql`: enables RLS on all five tables
