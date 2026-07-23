@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "eval": "tsx evals/run.ts"
+    "eval": "tsx --env-file-if-exists=.env.local evals/run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",
