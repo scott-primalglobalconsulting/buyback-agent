@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+### Task 5.2 — Landing + streaming demo path + presentational UI (2026-07-23)
+
+- **Design foundation (5.2a, `eb1247d`):** `app/globals.css` token system ported
+  from the approved design-direction proof — warm-neutral surfaces, the four
+  dataviz-validated DRIP hues (both themes), cobalt `--accent` (chrome-only),
+  sequential ramp, status colors; light default + dark via
+  `@media (prefers-color-scheme)` and `:root[data-theme]`. Fonts via
+  `next/font/google` (Instrument Serif / IBM Plex Sans / IBM Plex Mono) wired to
+  the `--f-*` vars. Five presentational components (`DripDashboard`,
+  `BuybackRate`, `TopTasks`, `ReplacementLadder`, `AuditTable`) — pure, prop-fed,
+  external CSS only (no inline styles), DRIP color always paired with a text
+  label. All rollup math delegated to `lib/buyback` (`quadrantHourRollup`,
+  `topTasksToOffload`, `buybackRate`). **Buyback rate renders as the reclaimable
+  PERCENT** (`buybackRate` returns the 0..1 Delegate+Replace share), not a dollar
+  figure. Mutation-verified render tests.
+- **Landing + demo (5.2b, `2b93321`):** `app/page.tsx` — what-it-is, the verbatim
+  non-affiliation disclaimer, "Try with sample data" → `/demo`, "Sign in". No
+  em/en dashes. `app/demo/page.tsx` (client) — POSTs to `/api/analyze`, **branches
+  on status before reading the stream** (429 rate-limited / 503 unavailable /
+  400-413 error / 200 event-stream), then reveals the dashboard on
+  `{type:'result'}`. **Honest states:** a real shimmer skeleton (reduced-motion
+  aware) during the wait, no fabricated "thinking" log.
+- **Honest-states route change:** `cacheReplayStream` now emits only the validated
+  `{type:'result'}` — the canned thinking replay was removed (live runs stream no
+  thinking under forced `tool_choice`, so the theater was dropped). Live path,
+  breaker, `decideDemo`, auth, and IP handling unchanged; cache-serve still makes
+  no agent call; the covering test now asserts result-with-no-thinking.
+- Controller-witnessed at Task 5.1: live compute streams a valid analysis (~14s,
+  one API call) then caches; a second call serves from cache in ~71ms with no API
+  call. 5.2 `/demo` verified rendering from the warm cache in light and dark.
+- Suite 46 tests green; typecheck + lint clean. Reviews: 5.2a and 5.2b both
+  Approved (adversarial, cost-path re-verified). Deferred polish: optional
+  "today's cached sample" indicator (cache vs live is intentionally
+  indistinguishable to the client under honest states).
+
 ### Task 5.1 — Sample week + guard-enforced streaming analyze route (2026-07-23)
 
 - Added `lib/sample.ts` — `SAMPLE_WEEK: TaskInput[]`, the fixed 10-task demo
