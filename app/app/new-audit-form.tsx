@@ -143,6 +143,10 @@ export function NewAuditForm({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [rows, setRows] = useState<Row[]>([{ ...BLANK_ROW }]);
+  const [isAtRevenue, setIsAtRevenue] = useState<'yes' | 'no'>('no');
+  const [annualIncome, setAnnualIncome] = useState('');
+  const [team, setTeam] = useState<'solo' | 'has-team'>('solo');
+  const [toolBudget, setToolBudget] = useState<'none' | 'some'>('none');
   const [status, setStatus] = useState<Status>('editing');
   const [message, setMessage] = useState<string>(DEFAULT_ERROR);
   const [validation, setValidation] = useState<string | null>(null);
@@ -205,9 +209,21 @@ export function NewAuditForm({ workspaceId }: { workspaceId: string }) {
     }
 
     // result -> re-validate + persist server-side, then open the saved audit.
+    // Assemble audit-context meta in the shape AuditMetaSchema validates: an
+    // empty/non-positive income drops out entirely rather than persisting 0.
+    const income = annualIncome.trim() === '' ? undefined : Number(annualIncome);
+    const meta = {
+      isAtRevenue: isAtRevenue === 'yes',
+      annualIncome:
+        Number.isFinite(income) && (income ?? 0) > 0 && (income ?? 0) <= 100_000_000
+          ? income
+          : undefined,
+      team,
+      toolBudget,
+    };
     setStatus('saving');
     try {
-      const id = await persistAudit(workspaceId, title, outcome.result);
+      const id = await persistAudit(workspaceId, title, outcome.result, meta);
       router.push(`/app/audit/${id}`);
     } catch {
       setStatus('error');
@@ -312,6 +328,98 @@ export function NewAuditForm({ workspaceId }: { workspaceId: string }) {
       </div>
 
       {validation ? <p className="signin-error">{validation}</p> : null}
+
+      <fieldset className="af-context">
+        <legend className="signin-label">About your business</legend>
+
+        <span className="signin-label" id="af-rev-label">
+          Are you at consistent revenue yet?
+        </span>
+        <div className="af-radios" role="radiogroup" aria-labelledby="af-rev-label">
+          <label>
+            <input
+              type="radio"
+              name="rev"
+              checked={isAtRevenue === 'no'}
+              onChange={() => setIsAtRevenue('no')}
+            />{' '}
+            Not yet
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="rev"
+              checked={isAtRevenue === 'yes'}
+              onChange={() => setIsAtRevenue('yes')}
+            />{' '}
+            Yes
+          </label>
+        </div>
+
+        <label className="signin-label" htmlFor="income">
+          Your target annual income (optional)
+        </label>
+        <input
+          id="income"
+          className="signin-input"
+          type="number"
+          min="0"
+          max="100000000"
+          step="1000"
+          inputMode="decimal"
+          placeholder="e.g. 200000"
+          value={annualIncome}
+          onChange={(e) => setAnnualIncome(e.target.value)}
+        />
+
+        <span className="signin-label" id="af-team-label">
+          Team
+        </span>
+        <div className="af-radios" role="radiogroup" aria-labelledby="af-team-label">
+          <label>
+            <input
+              type="radio"
+              name="team"
+              checked={team === 'solo'}
+              onChange={() => setTeam('solo')}
+            />{' '}
+            Solo
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="team"
+              checked={team === 'has-team'}
+              onChange={() => setTeam('has-team')}
+            />{' '}
+            Have a team
+          </label>
+        </div>
+
+        <span className="signin-label" id="af-tools-label">
+          Paid tool budget
+        </span>
+        <div className="af-radios" role="radiogroup" aria-labelledby="af-tools-label">
+          <label>
+            <input
+              type="radio"
+              name="tools"
+              checked={toolBudget === 'none'}
+              onChange={() => setToolBudget('none')}
+            />{' '}
+            None / free tools
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="tools"
+              checked={toolBudget === 'some'}
+              onChange={() => setToolBudget('some')}
+            />{' '}
+            Some budget
+          </label>
+        </div>
+      </fieldset>
 
       <div className="af-actions">
         <div className="af-actions-left">

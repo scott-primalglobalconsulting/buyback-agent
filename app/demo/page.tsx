@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { AnalysisResult } from '@/lib/agent';
 import { SAMPLE_WEEK } from '@/lib/sample';
 import { BuybackRate } from '@/components/BuybackRate';
+import { RevenueSummary } from '@/components/RevenueSummary';
 import { DripDashboard } from '@/components/DripDashboard';
 import { TopTasks } from '@/components/TopTasks';
 import { ReplacementLadder } from '@/components/ReplacementLadder';
@@ -239,6 +240,7 @@ function Dashboard({ result }: { result: AnalysisResult }) {
           <h2>Your reclaimable time</h2>
         </div>
         <BuybackRate items={items} firstHireRole={summary.firstHireRole} />
+        <RevenueSummary items={items} isAtRevenue={false} />
       </section>
 
       <section className="section">

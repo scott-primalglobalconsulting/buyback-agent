@@ -32,9 +32,13 @@ async function messageOf(res: Response): Promise<string> {
 export function SopPanel({
   items,
   initialSops,
+  team,
+  toolBudget,
 }: {
   items: AuditItemWithId[];
   initialSops: Record<string, string>;
+  team?: 'solo' | 'has-team';
+  toolBudget?: 'none' | 'some';
 }) {
   // markdown-by-audit-item-id; seeded with any already-persisted SOPs.
   const [sops, setSops] = useState<Record<string, string>>(initialSops);
@@ -55,7 +59,7 @@ export function SopPanel({
       res = await fetch('/api/sop', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ item: scored }),
+        body: JSON.stringify({ item: scored, team, toolBudget }),
       });
     } catch {
       setStatus((s) => ({ ...s, [id]: 'error' }));

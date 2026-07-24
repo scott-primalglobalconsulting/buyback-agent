@@ -27,7 +27,7 @@ describe('generateSOP', () => {
     };
     const workspaceContext = 'Founder uses QuickBooks and reconciles every Friday morning.';
 
-    const out = await generateSOP(item, workspaceContext, caller as never);
+    const out = await generateSOP(item, workspaceContext, undefined, caller as never);
 
     expect(out.purpose).toBe(payload.purpose);
     expect(out.steps).toHaveLength(3);

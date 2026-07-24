@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS } from '@/lib/buyback/types';
+import { DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS, REVENUE_PROXIMITY } from '@/lib/buyback/types';
 
 // DRIP_QUADRANTS / VALUE_TIERS / RECOMMENDATIONS are single-sourced in
 // lib/buyback/types (the domain vocab). HIRE_ROLES is an LLM-contract-only
 // enum with no domain-math consumer, so it stays local to the agent layer.
-export { DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS };
+export { DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS, REVENUE_PROXIMITY };
 export const HIRE_ROLES = ['admin', 'delivery', 'marketing', 'sales', 'leadership'] as const;
 
 export const ScoredItemSchema = z.object({
@@ -15,6 +15,7 @@ export const ScoredItemSchema = z.object({
   dripQuadrant: z.enum(DRIP_QUADRANTS),
   recommendation: z.enum(RECOMMENDATIONS),
   rationale: z.string().min(1),
+  revenueProximity: z.enum(REVENUE_PROXIMITY).optional(),
 });
 
 export const AnalysisSummarySchema = z.object({
@@ -57,8 +58,9 @@ export const analysisToolJsonSchema = {
           dripQuadrant: { type: 'string', enum: [...DRIP_QUADRANTS] },
           recommendation: { type: 'string', enum: [...RECOMMENDATIONS] },
           rationale: { type: 'string' },
+          revenueProximity: { type: 'string', enum: [...REVENUE_PROXIMITY] },
         },
-        required: ['task', 'hoursPerWeek', 'costToDelegate', 'valueTier', 'dripQuadrant', 'recommendation', 'rationale'],
+        required: ['task', 'hoursPerWeek', 'costToDelegate', 'valueTier', 'dripQuadrant', 'recommendation', 'rationale', 'revenueProximity'],
         additionalProperties: false,
       },
     },

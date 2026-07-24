@@ -18,7 +18,15 @@ import {
   inviteMember,
 } from '@/lib/db/workspaces';
 import { sopToMarkdown } from '@/lib/sop-markdown';
+import type { AuditMeta } from '@/lib/db/types';
 import { resolveAuditTitle } from './audit-view';
+
+const AuditMetaSchema = z.object({
+  isAtRevenue: z.boolean().optional(),
+  annualIncome: z.number().positive().max(100_000_000).optional(),
+  team: z.enum(['solo', 'has-team']).optional(),
+  toolBudget: z.enum(['none', 'some']).optional(),
+}).optional();
 
 export async function signOut() {
   const supabase = await createServerClient();
@@ -37,13 +45,16 @@ export async function persistAudit(
   workspaceId: string,
   title: string,
   result: unknown,
+  meta?: unknown,
 ): Promise<string> {
   const parsed = AnalysisResultSchema.parse(result);
+  const parsedMeta: AuditMeta | undefined = AuditMetaSchema.parse(meta);
   const audit = await createAudit(
     workspaceId,
     resolveAuditTitle(title),
     parsed.items,
     parsed.summary,
+    parsedMeta,
   );
   revalidatePath('/app');
   return audit.id;

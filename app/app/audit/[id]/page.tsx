@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation';
 import { getAudit } from '@/lib/db/audits';
 import { getSopsForAudit } from '@/lib/db/sops';
 import { asHireRole } from '../../audit-view';
+import { buybackHourlyRate } from '@/lib/buyback/rate';
 import { BuybackRate } from '@/components/BuybackRate';
+import { RevenueSummary } from '@/components/RevenueSummary';
 import { DripDashboard } from '@/components/DripDashboard';
 import { TopTasks } from '@/components/TopTasks';
 import { ReplacementLadder } from '@/components/ReplacementLadder';
@@ -60,7 +62,12 @@ export default async function AuditDetailPage({
           <span className="eyebrow">The number it turns on</span>
           <h2>Your reclaimable time</h2>
         </div>
-        <BuybackRate items={items} firstHireRole={firstHireRole} />
+        <BuybackRate
+          items={items}
+          firstHireRole={firstHireRole}
+          annualIncome={audit.annual_income ?? undefined}
+        />
+        <RevenueSummary items={items} isAtRevenue={audit.is_at_revenue ?? false} />
       </section>
 
       <section className="section">
@@ -96,7 +103,14 @@ export default async function AuditDetailPage({
           <span className="eyebrow">The full ledger</span>
           <h2>Every task, scored</h2>
         </div>
-        <AuditTable items={items} />
+        <AuditTable
+          items={items}
+          hourlyRate={
+            audit.annual_income != null && audit.annual_income > 0
+              ? buybackHourlyRate(audit.annual_income)
+              : undefined
+          }
+        />
       </section>
 
       <section className="section">
@@ -104,7 +118,16 @@ export default async function AuditDetailPage({
           <span className="eyebrow">Transfer step</span>
           <h2>Delegation SOPs</h2>
         </div>
-        <SopPanel items={delegateItems} initialSops={initialSops} />
+        <SopPanel
+          items={delegateItems}
+          initialSops={initialSops}
+          team={audit.team === 'solo' || audit.team === 'has-team' ? audit.team : undefined}
+          toolBudget={
+            audit.tool_budget === 'none' || audit.tool_budget === 'some'
+              ? audit.tool_budget
+              : undefined
+          }
+        />
       </section>
     </>
   );

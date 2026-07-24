@@ -28,6 +28,10 @@ export interface AuditRow {
   title: string | null;
   first_hire_role: string | null;
   first_hire_justification: string | null;
+  is_at_revenue: boolean | null;
+  annual_income: number | null;
+  team: string | null;
+  tool_budget: string | null;
   created_at: string;
 }
 
@@ -41,6 +45,7 @@ export interface AuditItemRow {
   drip_quadrant: string | null;
   recommendation: string | null;
   rationale: string | null;
+  revenue_proximity: string | null;
 }
 
 export interface SopRow {
@@ -66,4 +71,13 @@ export interface AuditWithItems extends AuditRow {
     firstHireRole: string | null;
     firstHireJustification: string | null;
   };
+}
+
+// Audit-level context the founder supplies at analyze time. All optional; persisted
+// on the audit row and consumed by the revenue summary, Buyback Rate, and SOP prompt.
+export interface AuditMeta {
+  isAtRevenue?: boolean;
+  annualIncome?: number;
+  team?: 'solo' | 'has-team';
+  toolBudget?: 'none' | 'some';
 }

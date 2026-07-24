@@ -11,6 +11,10 @@ const AUDIT: AuditWithItems = {
   title: 'Q3 Founder Audit',
   first_hire_role: 'admin',
   first_hire_justification: 'Admin work eats the most low-value hours.',
+  is_at_revenue: null,
+  annual_income: null,
+  team: null,
+  tool_budget: null,
   created_at: '2026-07-23T00:00:00.000Z',
   items: [
     {
@@ -64,6 +68,23 @@ const SOPS: SopRow[] = [
     created_at: '2026-07-23T01:05:00.000Z',
   },
 ];
+
+// Same shape as AUDIT, but its items carry revenueProximity so the sold-vs-built
+// line has something to report. revenue-direct = 5 (vision), other = 15.
+const AUDIT_WITH_PROXIMITY: AuditWithItems = {
+  ...AUDIT,
+  items: [
+    { ...AUDIT.items[0], revenueProximity: 'non-revenue' },
+    { ...AUDIT.items[1], revenueProximity: 'revenue-adjacent' },
+    { ...AUDIT.items[2], revenueProximity: 'revenue-direct' },
+  ],
+};
+
+// annual_income drives the real Buyback Rate: 200000/2000/4 = $25/hr.
+const AUDIT_WITH_INCOME: AuditWithItems = {
+  ...AUDIT,
+  annual_income: 200000,
+};
 
 describe('auditToMarkdown', () => {
   it('renders the audit title as the top-level heading', () => {
@@ -171,6 +192,58 @@ describe('auditToMarkdown', () => {
     expect(md).not.toContain('BOOKKEEPING_SOP_STALE');
     // Exactly one SOP heading for the item (no duplicate section).
     expect(occurrences('### SOP: Reconcile the books')).toBe(1);
+  });
+
+  it('renders the sold-vs-built line when proximity is present', () => {
+    const md = auditToMarkdown(AUDIT_WITH_PROXIMITY, SOPS);
+    expect(md).toMatch(/revenue-direct/i);
+    // revenue-direct = 5 (vision), everything else = 15.
+    expect(md).toContain('5 hrs/wk revenue-direct');
+    expect(md).toContain('15 hrs/wk everything else');
+  });
+
+  it('omits the sold-vs-built line when no item carries proximity', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).not.toContain('Sold vs built');
+  });
+
+  it('renders the Buyback Rate line when annual_income is set', () => {
+    const md = auditToMarkdown(AUDIT_WITH_INCOME, SOPS); // annual_income: 200000
+    expect(md).toContain('$25/hr'); // 200000/2000/4
+  });
+
+  it('omits the Buyback Rate line when annual_income is null', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).not.toContain('Buyback Rate');
+  });
+
+  it('marks each ledger row above/below the Buyback Rate when annual_income is set', () => {
+    // Rate = 200000/2000/4 = $25/hr. Tiers above $25 read "at your rate";
+    // the $10 tier (support) reads "below your rate".
+    const md = auditToMarkdown(AUDIT_WITH_INCOME, SOPS);
+    expect(md).toContain('at your rate');
+    expect(md).toContain('below your rate');
+    // The $10 support task is below the rate; the $10,000 vision task is at it.
+    expect(md).toContain('$10 (below your rate)');
+    expect(md).toContain('$10,000 (at your rate)');
+  });
+
+  it('omits the per-row Buyback Rate markers when annual_income is null', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).not.toContain('at your rate');
+    expect(md).not.toContain('below your rate');
+  });
+
+  it('renders a Revenue column in the scored table', () => {
+    const md = auditToMarkdown(AUDIT_WITH_PROXIMITY, SOPS);
+    expect(md).toMatch(/\|\s*Revenue\s*\|/);
+    expect(md).toContain('revenue-adjacent');
+  });
+
+  it('renders "not scored" in the Revenue column for untagged items', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).toMatch(/\|\s*Revenue\s*\|/);
+    expect(md).toContain('not scored');
   });
 
   it('skips SOP rows with null content_md', () => {

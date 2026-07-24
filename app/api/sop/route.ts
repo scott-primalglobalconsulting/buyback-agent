@@ -37,6 +37,10 @@ const MAX_CONTEXT_CHARS = 2000;
 const SopRequestSchema = z.object({
   item: ScoredItemSchema,
   context: z.string().optional(),
+  // Tiny closed enums (audit-level operator context) — validated so the prompt
+  // only ever sees a known value, never arbitrary caller text.
+  team: z.enum(['solo', 'has-team']).optional(),
+  toolBudget: z.enum(['none', 'some']).optional(),
 });
 
 const GENERIC_ERROR = 'SOP generation failed. Please try again in a moment.';
@@ -55,13 +59,13 @@ export async function POST(req: Request): Promise<Response> {
 
   const parsed = SopRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return jsonError(400, 'Invalid request: expected { item, context? }.');
+    return jsonError(400, 'Invalid request: expected { item, context?, team?, toolBudget? }.');
   }
 
   // Authed callers are session-gated and accountable, so the payload is fully
   // bounded HERE rather than behind the anonymous abuse-guard (which does not
   // cover this route). Per-user rate/budget limiting is intentionally deferred.
-  const { item, context } = parsed.data;
+  const { item, context, team, toolBudget } = parsed.data;
   if (item.task.length > MAX_TASK_CHARS) {
     return jsonError(413, 'Task is too long. Keep it under 500 characters.');
   }
@@ -73,7 +77,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
-    const sop = await generateSOP(item, context ?? '');
+    const sop = await generateSOP(item, context ?? '', { team, toolBudget });
     return new Response(JSON.stringify(sop), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

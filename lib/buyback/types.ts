@@ -7,6 +7,9 @@ export type ValueTier = (typeof VALUE_TIERS)[number];
 export const RECOMMENDATIONS = ['keep', 'delegate', 'eliminate'] as const;
 export type Recommendation = (typeof RECOMMENDATIONS)[number];
 
+export const REVENUE_PROXIMITY = ['revenue-direct', 'revenue-adjacent', 'non-revenue'] as const;
+export type RevenueProximity = (typeof REVENUE_PROXIMITY)[number];
+
 export interface TaskInput {
   task: string;
   hoursPerWeek: number;
@@ -18,4 +21,5 @@ export interface ScoredItem extends TaskInput {
   dripQuadrant: DripQuadrant;
   recommendation: Recommendation;
   rationale: string;
+  revenueProximity?: RevenueProximity;
 }

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  AnalysisResultSchema, SopSchema, analysisToolJsonSchema, DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS, HIRE_ROLES,
+  AnalysisResultSchema, SopSchema, analysisToolJsonSchema,
+  DRIP_QUADRANTS, VALUE_TIERS, RECOMMENDATIONS, HIRE_ROLES, REVENUE_PROXIMITY,
 } from '@/lib/agent/schema';
 
 describe('AnalysisResultSchema', () => {
@@ -50,4 +51,37 @@ describe('tool JSON schema stays in lockstep with Zod enums', () => {
   it('recommendation enum matches', () => expect(itemProps.recommendation.enum).toEqual([...RECOMMENDATIONS]));
   it('firstHireRole enum matches', () =>
     expect(analysisToolJsonSchema.properties.summary.properties.firstHireRole.enum).toEqual([...HIRE_ROLES]));
+});
+
+describe('revenueProximity field', () => {
+  const base = {
+    task: 't', hoursPerWeek: 1, costToDelegate: 1, valueTier: '$10' as const,
+    dripQuadrant: 'Delegate' as const, recommendation: 'delegate' as const, rationale: 'r',
+  };
+  const summary = { firstHireRole: 'admin' as const, firstHireJustification: 'j' };
+
+  it('accepts a valid revenueProximity', () => {
+    const ok = AnalysisResultSchema.safeParse({
+      items: [{ ...base, revenueProximity: 'revenue-direct' }], summary,
+    });
+    expect(ok.success).toBe(true);
+  });
+  it('accepts an item WITHOUT revenueProximity (back-compat with pre-0005 data)', () => {
+    const ok = AnalysisResultSchema.safeParse({ items: [base], summary });
+    expect(ok.success).toBe(true);
+  });
+  it('rejects an out-of-vocabulary revenueProximity', () => {
+    const bad = AnalysisResultSchema.safeParse({
+      items: [{ ...base, revenueProximity: 'kinda' }], summary,
+    });
+    expect(bad.success).toBe(false);
+  });
+  it('tool JSON schema requires revenueProximity on fresh output', () => {
+    const req = analysisToolJsonSchema.properties.items.items.required as readonly string[];
+    expect(req).toContain('revenueProximity');
+  });
+  it('tool JSON schema revenueProximity enum matches the vocab', () => {
+    expect(analysisToolJsonSchema.properties.items.items.properties.revenueProximity.enum)
+      .toEqual([...REVENUE_PROXIMITY]);
+  });
 });
