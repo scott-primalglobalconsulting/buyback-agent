@@ -2,28 +2,43 @@
 
 ## Unreleased
 
-### Task C4 — persist revenue-proximity + audit context (2026-07-24)
+### Report-quality Tier C + B — revenue-proximity, real Buyback Rate, SOP fit (2026-07-24)
 
-Commit `c85a89d`. Migration 0005 (additive, nullable, no RLS change) plus the
-DB row-type + mapping wiring so the model's per-task `revenueProximity` and the
-founder's audit-level context persist.
+The strategic report-quality upgrade (review items #3, #6, #7, #4, #5), built on
+branch `tier-c-report-quality` via the SDD cadence (implementer + adversarial
+reviewer per task on Opus 4.8) with a final whole-branch review. Plan:
+`docs/superpowers/plans/2026-07-24-report-quality-tier-c.md`. Commits `df00d74`
+(C1) through `24cb497` (fix wave).
 
-- **`supabase/migrations/0005_revenue_context.sql`.** `audit_items` gains
-  `revenue_proximity` (`text`); `audits` gains `is_at_revenue` (`boolean`),
-  `annual_income` (`numeric`), `team` (`text`), `tool_budget` (`text`) — all
-  NULLABLE. Applied locally via `supabase migration up`; columns confirmed with
-  `\d+`. No new table/policy/RPC/grant — existing `0002` row-level policies
-  already gate the new columns; isolation unaffected, no backfill.
-- **`lib/db/types.ts`.** `AuditItemRow.revenue_proximity`, `AuditRow.{is_at_revenue,
-  annual_income,team,tool_budget}`, and new `AuditMeta` input type. Stays a pure
-  types module.
-- **`lib/db/audits.ts`.** `rowToScoredItem` maps `revenue_proximity ?? undefined`;
-  `createAudit` gains a `meta?: AuditMeta` param and persists the four audit
-  columns + the item column. No caller passes `meta` yet (Task C5 wires it).
-- **`docs/architecture/migrations.md`.** 0005 catalog entry + cross-workspace
-  isolation note (mirrors 0004).
-- Gate: `npm run typecheck`, `npm run lint`, `npm test` (92) all green. Test
-  fixture `__tests__/export.test.ts` updated for the four new required row fields.
+- **#3 Revenue-proximity dimension.** Each task is scored `revenue-direct |
+  revenue-adjacent | non-revenue`, independent of DRIP. Vocab single-sourced in
+  `lib/buyback/types.ts`; optional in the Zod domain schema (read back-compat),
+  required in the Anthropic tool JSON schema (forced fresh output); drift-tested
+  (`c1: df00d74`). Prompt teaches it (`c3: 3bc7019`). A pre-revenue caution fires
+  when non-revenue Invest/Produce hours crowd out revenue-direct hours, sharper
+  before consistent revenue (`revenueCaution`, `RevenueSummary`).
+- **#6 Real Buyback Rate.** `buybackHourlyRate(annualIncome) = income / 2000 / 4`;
+  each task marked at/above vs below the rate via `isAboveBuybackRate` (in the
+  ledger + export, shown only when income is provided). Frees the term "Buyback
+  Rate" for its true $/hr meaning (pairs with Tier A #1).
+- **#7 Sold-vs-built line.** One glance: revenue-direct hrs vs everything else
+  (`soldVsBuilt`), in the dashboard and the export.
+- **#4/#5 SOP fit (Tier B).** `SOP_SYSTEM` de-stacked (no funded tools, no volume
+  or pricing-tier philosophy; name tool categories, prefer free/AI-native) and
+  made team/tool-budget aware; `/api/sop` + panel + audit page thread the context
+  (`b1: c547a4d`).
+- **Persistence.** Migration `0005_revenue_context.sql` (additive nullable, NO RLS
+  change): `audit_items.revenue_proximity` + `audits.{is_at_revenue,annual_income,
+  team,tool_budget}`. Applied locally; cross-workspace isolation note in
+  `docs/architecture/migrations.md` (mirrors 0004). Audit-level context flows
+  form → `persistAudit` (validated `AuditMetaSchema`) → `createAudit`, never through
+  `/api/analyze` (`c4: c85a89d`, `c5: b8f3897`, `c6: eee1f0a`).
+- **Gate 3 (live eval) re-run + hardened.** The classification contract changed, so
+  `npm run eval` was re-run live; the harness (`evals/run.ts`) gained a REV column
+  asserting `revenueProximity` presence + vocab (structure alone can't prove an
+  optional field is emitted). 4/4 PASS with REV ok (`27631e8`).
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (102), `npm run build` all
+  green. Final whole-branch review: ready to merge, no Critical/Important.
 
 ### Report-quality Tier A — credibility relabels (2026-07-24)
 
