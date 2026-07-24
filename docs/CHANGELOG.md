@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Report-quality Tier A — credibility relabels (2026-07-24)
+
+Source: `docs/REVIEW-2026-07-24-report-quality.md` (CoS report-quality review).
+Copy/presentation only; no scoring math changed. Commit `836fd28`.
+
+- **#1 "Buyback rate: X%" → "Reclaimable time: X%".** `buybackRate()` returns a
+  0..1 reclaimable-share fraction; in the Martell framework the Buyback Rate is a
+  $/hr figure, so the term is now reserved for a true $/hr (item #6). The percent
+  was mislabeled in seven user-facing places, all swept: `components/BuybackRate.tsx`
+  hero label, `lib/export.ts` markdown headline (+ `__tests__/export.test.ts`
+  assertion), `app/demo/page.tsx` heading + loading caption, `app/app/audit/[id]/page.tsx`
+  heading, `app/app/new-audit-form.tsx` caption, `app/page.tsx` lede.
+- **#2 Value column presentation.** `components/AuditTable.tsx` header
+  `Value` → `Value tier`. No recompute: `valueTier` stays the model's $10-$10,000
+  work-value judgment, distinct from the `costToDelegate` input. Under a "Value
+  tier" header a $1,000 rung reads as the ladder tier it is, not a computed dollar
+  contradicting a $0 cost-to-delegate.
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (75), `npm run build` all green.
+
 ### Task 6.1 — README + ARCHITECTURE + LICENSE (2026-07-23)
 
 - `README.md` (public-facing, no em/en dashes): what-it-is + disclaimer, the
