@@ -69,6 +69,23 @@ const SOPS: SopRow[] = [
   },
 ];
 
+// Same shape as AUDIT, but its items carry revenueProximity so the sold-vs-built
+// line has something to report. revenue-direct = 5 (vision), other = 15.
+const AUDIT_WITH_PROXIMITY: AuditWithItems = {
+  ...AUDIT,
+  items: [
+    { ...AUDIT.items[0], revenueProximity: 'non-revenue' },
+    { ...AUDIT.items[1], revenueProximity: 'revenue-adjacent' },
+    { ...AUDIT.items[2], revenueProximity: 'revenue-direct' },
+  ],
+};
+
+// annual_income drives the real Buyback Rate: 200000/2000/4 = $25/hr.
+const AUDIT_WITH_INCOME: AuditWithItems = {
+  ...AUDIT,
+  annual_income: 200000,
+};
+
 describe('auditToMarkdown', () => {
   it('renders the audit title as the top-level heading', () => {
     const md = auditToMarkdown(AUDIT, SOPS);
@@ -175,6 +192,41 @@ describe('auditToMarkdown', () => {
     expect(md).not.toContain('BOOKKEEPING_SOP_STALE');
     // Exactly one SOP heading for the item (no duplicate section).
     expect(occurrences('### SOP: Reconcile the books')).toBe(1);
+  });
+
+  it('renders the sold-vs-built line when proximity is present', () => {
+    const md = auditToMarkdown(AUDIT_WITH_PROXIMITY, SOPS);
+    expect(md).toMatch(/revenue-direct/i);
+    // revenue-direct = 5 (vision), everything else = 15.
+    expect(md).toContain('5 hrs/wk revenue-direct');
+    expect(md).toContain('15 hrs/wk everything else');
+  });
+
+  it('omits the sold-vs-built line when no item carries proximity', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).not.toContain('Sold vs built');
+  });
+
+  it('renders the Buyback Rate line when annual_income is set', () => {
+    const md = auditToMarkdown(AUDIT_WITH_INCOME, SOPS); // annual_income: 200000
+    expect(md).toContain('$25/hr'); // 200000/2000/4
+  });
+
+  it('omits the Buyback Rate line when annual_income is null', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).not.toContain('Buyback Rate');
+  });
+
+  it('renders a Revenue column in the scored table', () => {
+    const md = auditToMarkdown(AUDIT_WITH_PROXIMITY, SOPS);
+    expect(md).toMatch(/\|\s*Revenue\s*\|/);
+    expect(md).toContain('revenue-adjacent');
+  });
+
+  it('renders "not scored" in the Revenue column for untagged items', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).toMatch(/\|\s*Revenue\s*\|/);
+    expect(md).toContain('not scored');
   });
 
   it('skips SOP rows with null content_md', () => {

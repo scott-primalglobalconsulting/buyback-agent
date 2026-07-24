@@ -6,7 +6,8 @@
 // the clock — any timestamp must be passed in by the caller. This keeps it
 // unit-testable and safe to import from anywhere.
 import { HIRE_ROLES } from '@/lib/agent/schema';
-import { buybackRate } from '@/lib/buyback/rate';
+import { buybackHourlyRate, buybackRate } from '@/lib/buyback/rate';
+import { soldVsBuilt } from '@/lib/buyback/revenue';
 import { quadrantHourRollup } from '@/lib/buyback/rollups';
 import { DRIP_QUADRANTS } from '@/lib/buyback/types';
 import type { ValueTier } from '@/lib/buyback/types';
@@ -45,6 +46,28 @@ export function auditToMarkdown(audit: AuditWithItems, sops: SopRow[]): string {
     '',
   );
 
+  // Sold vs built — hours that move money vs everything else. Self-hide when no
+  // item carries proximity (pre-0005 audits), so old data never reads as if all
+  // hours were "everything else". Mirrors the render layer's `anyTagged` gate.
+  const anyTagged = items.some((i) => i.revenueProximity != null);
+  if (anyTagged) {
+    const { revenueDirect, other } = soldVsBuilt(items);
+    lines.push(
+      `**Sold vs built:** ${revenueDirect} hrs/wk revenue-direct, ${other} hrs/wk everything else.`,
+      '',
+    );
+  }
+
+  // The true Buyback Rate (annual income / 2000 / 4). Only when the founder gave
+  // a positive income, so we never print a bogus $0/hr line.
+  const income = audit.annual_income;
+  if (income != null && income > 0) {
+    lines.push(
+      `**Buyback Rate:** $${buybackHourlyRate(income)}/hr (delegate work worth less than this).`,
+      '',
+    );
+  }
+
   // DRIP allocation — hours per quadrant, fixed quadrant order.
   lines.push('## DRIP allocation', '');
   for (const q of DRIP_QUADRANTS) {
@@ -54,11 +77,11 @@ export function auditToMarkdown(audit: AuditWithItems, sops: SopRow[]): string {
 
   // The full ledger, one row per scored task.
   lines.push('## Every task, scored', '');
-  lines.push('| Task | Hrs/wk | $/hr | Value | DRIP | Call |');
-  lines.push('| --- | ---: | ---: | --- | --- | --- |');
+  lines.push('| Task | Hrs/wk | $/hr | Value | Revenue | DRIP | Call |');
+  lines.push('| --- | ---: | ---: | --- | --- | --- | --- |');
   for (const it of items) {
     lines.push(
-      `| ${cell(it.task)} | ${it.hoursPerWeek} | ${it.costToDelegate} | ${cell(VALUE_TIER_LABEL[it.valueTier])} | ${it.dripQuadrant} | ${it.recommendation} |`,
+      `| ${cell(it.task)} | ${it.hoursPerWeek} | ${it.costToDelegate} | ${cell(VALUE_TIER_LABEL[it.valueTier])} | ${cell(it.revenueProximity ?? 'not scored')} | ${it.dripQuadrant} | ${it.recommendation} |`,
     );
   }
   lines.push('');
