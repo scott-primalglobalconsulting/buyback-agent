@@ -168,3 +168,30 @@ describe('POST /api/analyze — authenticated path', () => {
     assertNoAgentCall();
   });
 });
+
+describe('POST /api/analyze — demo intent survives a signed-in session', () => {
+  // The /demo client posts `{}` and relies on the demo (sample) path. A signed-in
+  // visitor carries a session cookie, so dispatching on session presence alone
+  // wrongly routed them to the authed path and 400'd on the missing `items`. An
+  // explicit ?demo=1 flag must serve the guarded sample regardless of session.
+  it('serves the demo sample for a SIGNED-IN user with ?demo=1 (regression: was 400)', async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue('user-1');
+    vi.mocked(incrDemoRate).mockResolvedValue(1);
+    vi.mocked(getSampleCache).mockResolvedValue({ resultJson: CACHED_RESULT, ageMs: 1000 });
+    vi.mocked(getDailyLiveCount).mockResolvedValue(0);
+
+    const req = new Request('http://localhost/api/analyze?demo=1', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': '1.2.3.4' },
+      body: '{}',
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/event-stream');
+    const text = await res.text();
+    expect(text).toContain('"type":"result"');
+    expect(text).toContain('Bookkeeping & reconciliation');
+    assertNoAgentCall();
+  });
+});

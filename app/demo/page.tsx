@@ -88,7 +88,7 @@ async function readStream(body: ReadableStream<Uint8Array>): Promise<DemoState> 
 async function runDemo(signal: AbortSignal): Promise<DemoState> {
   let res: Response;
   try {
-    res = await fetch('/api/analyze', {
+    res = await fetch('/api/analyze?demo=1', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: '{}',

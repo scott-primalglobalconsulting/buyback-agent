@@ -70,6 +70,13 @@ const SSE_HEADERS = {
 const GENERIC_ERROR = 'Analysis failed. Please try again in a moment.';
 
 export async function POST(req: Request): Promise<Response> {
+  // The public /demo path posts `{}` and wants the guarded sample REGARDLESS of
+  // whether the visitor happens to be signed in. Dispatch on explicit demo intent
+  // FIRST: a session cookie must not route a demo request into the authenticated
+  // path (which requires an `items` body and would 400 on `{}`). handleDemo keeps
+  // its full per-IP rate / daily-budget / cache guard and only ever serves the
+  // fixed SAMPLE_WEEK, so this opens no new cost surface for signed-in callers.
+  if (new URL(req.url).searchParams.get('demo') === '1') return handleDemo(req);
   const userId = await getSessionUserId();
   return userId ? handleAuthenticated(req) : handleDemo(req);
 }
