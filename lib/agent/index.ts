@@ -5,6 +5,7 @@ export { analyzeAudit, streamAnalyzeAudit, type AnalyzeStreamEvent } from '@/lib
 export { generateSOP } from '@/lib/agent/sop';
 export {
   AnalysisResultSchema,
+  ScoredItemSchema,
   SopSchema,
   type AnalysisResult,
   type ScoredItem,

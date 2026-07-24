@@ -26,6 +26,8 @@ export interface AuditRow {
   workspace_id: string;
   created_by: string | null;
   title: string | null;
+  first_hire_role: string | null;
+  first_hire_justification: string | null;
   created_at: string;
 }
 
@@ -48,7 +50,20 @@ export interface SopRow {
   created_at: string;
 }
 
-// An audit plus its items mapped into the validated camelCase domain type.
+// A validated ScoredItem carrying its persisted audit_items row id. The id is
+// kept alongside the domain type (rather than folded into ScoredItemSchema) so
+// the schema stays a pure domain shape; the audit-detail UI (5.3c) needs the id
+// to key rows and to fetch/generate the per-item SOP.
+export type AuditItemWithId = ScoredItem & { id: string };
+
+// An audit plus its items mapped into the validated camelCase domain type, and
+// the LLM-judged first-hire summary read back from the audit row. `summary`
+// fields are null for audits persisted before migration 0004 (or created
+// without a summary). Consumed by the audit-detail page (5.3c).
 export interface AuditWithItems extends AuditRow {
-  items: ScoredItem[];
+  items: AuditItemWithId[];
+  summary: {
+    firstHireRole: string | null;
+    firstHireJustification: string | null;
+  };
 }

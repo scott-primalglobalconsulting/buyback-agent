@@ -35,6 +35,7 @@ export const SopSchema = z.object({
 });
 
 export type ScoredItem = z.infer<typeof ScoredItemSchema>;
+export type AnalysisSummary = z.infer<typeof AnalysisSummarySchema>;
 export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
 export type Sop = z.infer<typeof SopSchema>;
 

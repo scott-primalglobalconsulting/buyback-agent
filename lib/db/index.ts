@@ -11,3 +11,4 @@ export * from './types';
 export * from './workspaces';
 export * from './audits';
 export * from './sops';
+export * from './session';

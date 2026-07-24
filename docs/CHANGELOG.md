@@ -2,6 +2,148 @@
 
 ## Unreleased
 
+### Task 5.4 — Single-file markdown export (2026-07-23)
+
+- `lib/export.ts` `auditToMarkdown(audit, sops)` (PURE — imports only
+  `lib/buyback` + `HIRE_ROLES` + types; no React/Next/Supabase/Anthropic, no
+  clock): title + buyback percent + reclaimable/total hours, the DRIP
+  quadrant-hours rollup, the scored table, the Replacement Ladder (recommended
+  hire + justification, null-summary safe), and each SOP embedded under its task
+  heading (id-based `audit_item_id` -> item mapping). TDD: `__tests__/export.test.ts`
+  red-first (`Cannot find '@/lib/export'`) then green, 8 cases incl. null-summary.
+- `app/api/export/[id]/route.ts` (GET, nodejs): `getSessionUserId` null -> 401,
+  RLS-scoped `getAudit` null -> 404 (cross-tenant guard), `text/markdown`
+  attachment with a sanitized `[a-z0-9-]` filename (no header injection). Consumes
+  `lib/db` + `lib/export` only. Plus a "Download markdown" link on the detail page.
+- Suite 74 tests green; typecheck + lint clean. Review Approved (filename
+  injection, purity, id-based SOP mapping, 401-before-404 all verified). Deferred
+  polish: dedupe regenerated SOPs in the export to match the page's latest-per-item.
+
+### Task 5.3 — Auth, persisted audits, SOP generation, teammate invite (2026-07-23)
+
+Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
+4.8; controller-witnessed the security/cost gates live against the local stack.
+
+- **5.3a auth (`509aa2c`):** magic-link sign-in (`signInWithOtp`) + `app/auth/
+  callback` code->session exchange + `app/app` session gate (`getUser()`-verified,
+  no open redirect) + first-sign-in personal-workspace bootstrap. Sign-out revokes
+  server-side. Redirect globs added to `config.toml`.
+- **5.3b data layer (`b88fd21`):** migration `0004` persists the LLM summary
+  (`first_hire_role`/`first_hire_justification`, additive nullable, no RLS change);
+  `getAudit` now returns `audit_item` ids + summary; `AuditWithItems.items` is
+  `(ScoredItem & {id})[]`. Bootstrap moved layout->callback (closes the
+  concurrent double-create); session-refresh `middleware.ts` added.
+- **5.3c authed flow (`76ce7aa`):** `/app` audit list + new-audit form (editable
+  rows, "Load sample week") that streams the authed analysis (honest skeleton, no
+  fake thinking), persists via a `persistAudit` server action that re-validates
+  with `AnalysisResultSchema` (never trusts the client), and opens the persisted
+  detail page (`getAudit` null -> `notFound()`, no cross-tenant leak). Title capped.
+- **5.3d SOP + invite (`25046f4`, hardened `ea2f461`):** auth-gated `/api/sop`
+  (401 first, so it cannot bleed the API; payload fully bounded -> `task`<=500 via
+  `GUARD_LIMITS`, `rationale`/`context`<=2000 -> 413; errors hidden). Pure
+  `sopToMarkdown` (TDD); per-delegate-task "Generate SOP" -> render (React-escaped,
+  no `dangerouslySetInnerHTML`) -> `saveSop`. Teammate invite: owner-checked BEFORE
+  the service-role email lookup (no enumeration by non-owners).
+- **Controller-witnessed live (local stack):** magic-link round-trip (founder-a
+  created + workspace bootstrapped, DB-confirmed); authed analyze->persist->reopen
+  (14s live call, DB shows `first_hire_role=admin` + 10 items); cross-user RLS
+  through the app (founder-b gets 404 on founder-a's audit); live SOP generation
+  persisted (3200-char markdown keyed to the correct `audit_item`).
+- Suite 64 tests green; typecheck + lint clean; `next build` compiles.
+
+### Task 5.3b — Persist audit summary + getAudit item ids + auth hardening (2026-07-23)
+
+- **Migration `0004_audit_summary.sql`:** additive nullable `first_hire_role` /
+  `first_hire_justification` columns on `audits` to persist the LLM-judged
+  first-hire recommendation for the audit-detail page (5.3c). **No RLS change** —
+  the existing `audits_all` row policy (`0002_rls.sql`) already gates these
+  columns; no column-level grants, no cross-workspace isolation impact. Not
+  applied by the agent (DB holds live data); awaits controller apply. Catalogued
+  in `docs/architecture/migrations.md`.
+- **Data layer:** `AuditRow` gains the two columns. New `AuditItemWithId =
+  ScoredItem & { id: string }`; `AuditWithItems.items` is now `AuditItemWithId[]`
+  and carries `summary: { firstHireRole, firstHireJustification }` (both nullable
+  for pre-0004 audits). `createAudit` takes an optional `summary` param
+  (`AnalysisSummary`) and persists it; `getAudit` returns item ids + summary.
+  `rowToScoredItem` unchanged (still the Zod domain parse) — the id is wrapped on
+  after the parse, keeping `ScoredItemSchema` a pure domain shape.
+- **Auth hardening (5.3a review follow-ups):** workspace bootstrap moved out of
+  `app/app/layout.tsx` into `app/auth/callback/route.ts` (runs once per sign-in,
+  closes the concurrent double-create window; bootstrap failure is logged, not a
+  500). Added session-refresh `middleware.ts` (root) delegating to
+  `lib/db/middleware.ts` (`updateSession`, canonical `@supabase/ssr` getAll/setAll
+  pattern, `getUser()` refresh) with a matcher excluding Next internals + static
+  assets. Supabase construction stays inside `lib/db` (isolation).
+- Suite 46 tests green; typecheck + lint clean. No live-DB unit harness exists
+  for the db layer (typecheck is the gate); 5.3c exercises `createAudit`/
+  `getAudit` against the live DB.
+
+### Task 5.2 — Landing + streaming demo path + presentational UI (2026-07-23)
+
+- **Design foundation (5.2a, `eb1247d`):** `app/globals.css` token system ported
+  from the approved design-direction proof — warm-neutral surfaces, the four
+  dataviz-validated DRIP hues (both themes), cobalt `--accent` (chrome-only),
+  sequential ramp, status colors; light default + dark via
+  `@media (prefers-color-scheme)` and `:root[data-theme]`. Fonts via
+  `next/font/google` (Instrument Serif / IBM Plex Sans / IBM Plex Mono) wired to
+  the `--f-*` vars. Five presentational components (`DripDashboard`,
+  `BuybackRate`, `TopTasks`, `ReplacementLadder`, `AuditTable`) — pure, prop-fed,
+  external CSS only (no inline styles), DRIP color always paired with a text
+  label. All rollup math delegated to `lib/buyback` (`quadrantHourRollup`,
+  `topTasksToOffload`, `buybackRate`). **Buyback rate renders as the reclaimable
+  PERCENT** (`buybackRate` returns the 0..1 Delegate+Replace share), not a dollar
+  figure. Mutation-verified render tests.
+- **Landing + demo (5.2b, `2b93321`):** `app/page.tsx` — what-it-is, the verbatim
+  non-affiliation disclaimer, "Try with sample data" → `/demo`, "Sign in". No
+  em/en dashes. `app/demo/page.tsx` (client) — POSTs to `/api/analyze`, **branches
+  on status before reading the stream** (429 rate-limited / 503 unavailable /
+  400-413 error / 200 event-stream), then reveals the dashboard on
+  `{type:'result'}`. **Honest states:** a real shimmer skeleton (reduced-motion
+  aware) during the wait, no fabricated "thinking" log.
+- **Honest-states route change:** `cacheReplayStream` now emits only the validated
+  `{type:'result'}` — the canned thinking replay was removed (live runs stream no
+  thinking under forced `tool_choice`, so the theater was dropped). Live path,
+  breaker, `decideDemo`, auth, and IP handling unchanged; cache-serve still makes
+  no agent call; the covering test now asserts result-with-no-thinking.
+- Controller-witnessed at Task 5.1: live compute streams a valid analysis (~14s,
+  one API call) then caches; a second call serves from cache in ~71ms with no API
+  call. 5.2 `/demo` verified rendering from the warm cache in light and dark.
+- Suite 46 tests green; typecheck + lint clean. Reviews: 5.2a and 5.2b both
+  Approved (adversarial, cost-path re-verified). Deferred polish: optional
+  "today's cached sample" indicator (cache vs live is intentionally
+  indistinguishable to the client under honest states).
+
+### Task 5.1 — Sample week + guard-enforced streaming analyze route (2026-07-23)
+
+- Added `lib/sample.ts` — `SAMPLE_WEEK: TaskInput[]`, the fixed 10-task demo
+  dataset (40 hrs/wk, all four DRIP quadrants) the anonymous `/demo` path
+  analyzes. Pure data (no React/Next/Supabase/Anthropic). TDD:
+  `__tests__/sample.test.ts` written first and seen failing (`Cannot find
+  package '@/lib/sample'`), then implemented green.
+- Added `app/api/analyze/route.ts` — POST, `runtime = 'nodejs'`. Consumes
+  `lib/agent`, `lib/db`, `lib/guard`, `lib/buyback` ONLY (no direct Anthropic
+  or Supabase import). Auth-first: a valid session (`getSessionUserId`) →
+  Zod-parse + `validatePayloadSize` the body (400/413 on reject) →
+  `streamAnalyzeAudit(items)` with an `analyzeAudit` retry fallback. No session
+  → ignore the body, run the guard over `SAMPLE_WEEK`: `serve_cache`/
+  `breaker_serve_cache` replay a canned thinking log then emit the cached
+  result (no API), `rate_limited` → 429, `unavailable` → 503, `compute_live`
+  → `incrDailyLiveCount` (increment-then-check against the daily budget to
+  close the concurrency overshoot), stream, then `putSampleCache`.
+- SSE schema (comment at top of route; consumed by Task 5.2): `data: {json}\n\n`
+  with `{type:'thinking',text}` · `{type:'result',result}` · `{type:'error',
+  message}`.
+- IP privacy: route hashes the client IP (`sha256(ip + SERVER_SALT)`, node
+  crypto) and passes only `ipHash` to `lib/db/guard`; raw IPs never leave the
+  route. Added `lib/db/session.ts` (`getSessionUserId`, `getUser`-verified) so
+  the route detects auth without touching Supabase directly. Documented
+  `SERVER_SALT` in `.env.example`.
+- Tests: `__tests__/api/analyze.test.ts` fakes the db/agent seams to cover
+  `rate_limited` (429), cache-serve (200, thinking replay + result, asserts NO
+  agent call), authed over-cap (413), and malformed body (400). Suite 38
+  tests, all green; typecheck + lint clean. The live `compute_live` leg is an
+  operator gate — NOT exercised in CI.
+
 ### Phase 5 kickoff — design system (2026-07-23)
 
 - Brainstormed the Phase 5 UI direction (anti-"AI slop" mandate). Operator
