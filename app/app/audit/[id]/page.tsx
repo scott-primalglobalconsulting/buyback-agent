@@ -58,7 +58,7 @@ export default async function AuditDetailPage({
       <section className="section">
         <div className="section-head">
           <span className="eyebrow">The number it turns on</span>
-          <h2>Your buyback rate</h2>
+          <h2>Your reclaimable time</h2>
         </div>
         <BuybackRate items={items} firstHireRole={firstHireRole} />
       </section>

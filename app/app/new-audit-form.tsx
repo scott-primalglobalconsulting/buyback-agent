@@ -339,7 +339,7 @@ function RunningSkeleton({ phase }: { phase: 'running' | 'saving' }) {
         <p>
           {phase === 'saving'
             ? 'Storing the scored tasks and opening your audit.'
-            : 'Scoring each task into DRIP quadrants, computing your buyback rate, and picking the first hire.'}
+            : 'Scoring each task into DRIP quadrants, computing your reclaimable time, and picking the first hire.'}
         </p>
       </div>
       <div className="skel-grid" aria-hidden="true">

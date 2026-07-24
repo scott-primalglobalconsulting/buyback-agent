@@ -32,7 +32,7 @@ export function BuybackRate({
 
   return (
     <div className="rate-panel">
-      <span className="rate-label">Your buyback rate</span>
+      <span className="rate-label">Your reclaimable time</span>
       <div className="rate-fig">
         <span className="amt tnum">{pct}%</span>
       </div>

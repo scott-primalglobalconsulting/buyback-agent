@@ -71,10 +71,10 @@ describe('auditToMarkdown', () => {
     expect(md).toContain('# Q3 Founder Audit');
   });
 
-  it('renders the buyback rate as the exact whole percent with reclaimable vs total hours', () => {
+  it('renders the reclaimable time as the exact whole percent with reclaimable vs total hours', () => {
     const md = auditToMarkdown(AUDIT, SOPS);
     // Anchor the exact formatted token, not a loose "75%" substring.
-    expect(md).toContain('**Buyback rate: 75%**: 15 of 20 weekly hours are reclaimable.');
+    expect(md).toContain('**Reclaimable time: 75%**: 15 of 20 weekly hours are reclaimable.');
   });
 
   it('renders the DRIP quadrant-hour rollup in the DRIP allocation section', () => {

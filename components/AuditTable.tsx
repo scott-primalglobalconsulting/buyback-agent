@@ -24,7 +24,7 @@ export function AuditTable({ items }: { items: (ScoredItem & { id?: string })[] 
               <th>Task</th>
               <th className="num">Hrs/wk</th>
               <th className="num">$/hr</th>
-              <th>Value</th>
+              <th>Value tier</th>
               <th>DRIP</th>
               <th>Call</th>
             </tr>

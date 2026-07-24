@@ -23,8 +23,9 @@ export default function Home() {
         </h1>
         <p className="lede">
           Log a week of tasks. An engineered agent sorts each into Delegate,
-          Replace, Invest, or Produce, computes your buyback rate, and recommends
-          the first role to hire, with delegation SOPs to hand off.
+          Replace, Invest, or Produce, shows how much of your week is
+          reclaimable, and recommends the first role to hire, with delegation
+          SOPs to hand off.
         </p>
 
         <div className="cta-row">

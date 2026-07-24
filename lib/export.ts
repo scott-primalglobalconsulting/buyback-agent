@@ -41,7 +41,7 @@ export function auditToMarkdown(audit: AuditWithItems, sops: SopRow[]): string {
 
   lines.push(`# ${title}`, '');
   lines.push(
-    `**Buyback rate: ${ratePct}%**: ${reclaimable} of ${total} weekly hours are reclaimable.`,
+    `**Reclaimable time: ${ratePct}%**: ${reclaimable} of ${total} weekly hours are reclaimable.`,
     '',
   );
 
