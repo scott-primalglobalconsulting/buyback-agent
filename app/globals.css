@@ -209,6 +209,20 @@ body {
   max-width: 42ch;
   margin: 10px 0 24px;
 }
+.rate-buyback {
+  color: var(--ink);
+  font-size: 14px;
+  max-width: 44ch;
+  margin: -10px 0 24px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel));
+}
+.rate-buyback b {
+  color: var(--accent);
+}
 .stat-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -600,6 +614,78 @@ body {
 .tier {
   font-family: var(--f-mono);
   font-size: 12px;
+}
+
+/* ============================ REVENUE SUMMARY ============================ */
+.rev-summary {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.rev-line {
+  color: var(--ink-2);
+  font-size: 15px;
+  margin: 0;
+}
+.rev-line b {
+  color: var(--ink);
+}
+.rev-caution {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--warn) 34%, var(--line));
+  border-left: 3px solid var(--warn);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--warn) 8%, var(--panel));
+}
+.rev-caution-badge {
+  display: inline-block;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warn);
+  margin-bottom: 6px;
+}
+.rev-caution p {
+  color: var(--ink);
+  font-size: 14px;
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* Revenue-proximity chip: labeled pill, color paired with text (never alone). */
+.rchip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 100px;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.rchip.r--revenue-direct {
+  color: var(--good);
+  border-color: color-mix(in srgb, var(--good) 40%, transparent);
+  background: color-mix(in srgb, var(--good) 12%, transparent);
+}
+.rchip.r--revenue-adjacent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.rchip.r--non-revenue {
+  color: var(--ink-2);
+  border-color: var(--line-2);
+  background: var(--inset);
+}
+.rchip.r--unknown {
+  color: var(--ink-3);
+  border-color: var(--line);
+  background: transparent;
 }
 
 /* ============================ PAGE SHELL ============================ */

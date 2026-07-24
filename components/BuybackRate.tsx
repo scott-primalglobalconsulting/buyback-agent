@@ -1,5 +1,5 @@
 import type { ScoredItem } from "@/lib/buyback/types";
-import { buybackRate } from "@/lib/buyback/rate";
+import { buybackRate, buybackHourlyRate } from "@/lib/buyback/rate";
 import { quadrantHourRollup } from "@/lib/buyback/rollups";
 import { HIRE_ROLES } from "@/lib/agent/schema";
 
@@ -21,14 +21,18 @@ function cap(role: string) {
 export function BuybackRate({
   items,
   firstHireRole,
+  annualIncome,
 }: {
   items: ScoredItem[];
   firstHireRole: HireRole | null;
+  annualIncome?: number;
 }) {
   const pct = Math.round(buybackRate(items) * 100);
   const rollup = quadrantHourRollup(items);
   const reclaimable = rollup.Delegate + rollup.Replace;
   const total = items.reduce((sum, i) => sum + i.hoursPerWeek, 0);
+  const hourly =
+    annualIncome && annualIncome > 0 ? buybackHourlyRate(annualIncome) : null;
 
   return (
     <div className="rate-panel">
@@ -40,6 +44,12 @@ export function BuybackRate({
         The reclaimable share of your week. Hand off or automate everything below
         your leverage and you buy that time back.
       </p>
+      {hourly ? (
+        <p className="rate-buyback">
+          Your Buyback Rate is <b className="tnum">${hourly}/hr</b>. Delegate
+          anything whose work is worth less than that.
+        </p>
+      ) : null}
       <div className="stat-2">
         <div className="stat">
           <div className="n tnum">

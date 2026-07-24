@@ -26,6 +26,7 @@ export function AuditTable({ items }: { items: (ScoredItem & { id?: string })[] 
               <th className="num">$/hr</th>
               <th>Value tier</th>
               <th>DRIP</th>
+              <th>Revenue</th>
               <th>Call</th>
             </tr>
           </thead>
@@ -41,6 +42,15 @@ export function AuditTable({ items }: { items: (ScoredItem & { id?: string })[] 
                     <span className="d" aria-hidden="true" />
                     {it.dripQuadrant}
                   </span>
+                </td>
+                <td>
+                  {it.revenueProximity ? (
+                    <span className={`rchip r--${it.revenueProximity}`}>
+                      {it.revenueProximity}
+                    </span>
+                  ) : (
+                    <span className="rchip r--unknown">not scored</span>
+                  )}
                 </td>
                 <td>
                   <span className={`rec ${it.recommendation}`}>

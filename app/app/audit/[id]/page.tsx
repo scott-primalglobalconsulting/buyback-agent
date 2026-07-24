@@ -3,6 +3,7 @@ import { getAudit } from '@/lib/db/audits';
 import { getSopsForAudit } from '@/lib/db/sops';
 import { asHireRole } from '../../audit-view';
 import { BuybackRate } from '@/components/BuybackRate';
+import { RevenueSummary } from '@/components/RevenueSummary';
 import { DripDashboard } from '@/components/DripDashboard';
 import { TopTasks } from '@/components/TopTasks';
 import { ReplacementLadder } from '@/components/ReplacementLadder';
@@ -60,7 +61,12 @@ export default async function AuditDetailPage({
           <span className="eyebrow">The number it turns on</span>
           <h2>Your reclaimable time</h2>
         </div>
-        <BuybackRate items={items} firstHireRole={firstHireRole} />
+        <BuybackRate
+          items={items}
+          firstHireRole={firstHireRole}
+          annualIncome={audit.annual_income ?? undefined}
+        />
+        <RevenueSummary items={items} isAtRevenue={audit.is_at_revenue ?? false} />
       </section>
 
       <section className="section">
