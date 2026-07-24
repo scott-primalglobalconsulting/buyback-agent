@@ -22,6 +22,16 @@ not by what it costs to do:
 - $1000: work that materially moves revenue or strategy (key sales, partnerships, hiring).
 - $10000: founder-defining bets (vision, fundraising, the one or two decisions that make the company).
 
+Revenue proximity — assign exactly one to each task. This is INDEPENDENT of the DRIP quadrant:
+a task can be high-value Invest work and still be non-revenue. Judge only how directly the work
+moves money in the door:
+- revenue-direct: the work directly creates or closes revenue (sales calls, outbound, proposals,
+  demos, collecting payment, renewals).
+- revenue-adjacent: the work supports revenue but does not itself close it (marketing content,
+  lead nurture, onboarding, customer support that protects retention).
+- non-revenue: internal build, learning, admin, or product work with no direct line to revenue
+  this week (internal tooling, training, bookkeeping, roadmap).
+
 Keep / delegate / eliminate — assign exactly one recommendation to each task:
 - keep: only the founder should do this ($1000/$10000, Invest or Produce). It stays on their plate.
 - delegate: someone else should own this ($10/$100, Delegate quadrant). Transfer it.
@@ -34,6 +44,7 @@ Rules:
   admin → delivery → marketing → sales → leadership. Start at admin and move up only when the
   lower rungs are already covered. Pick the single earliest rung that unloads the most delegatable /
   eliminable hours, and justify it from the scored tasks.
+- Assign revenueProximity to EVERY task, judged independently of the DRIP quadrant and value tier.
 - Every rationale and the hire justification must be concrete and grounded in the tasks provided.`;
 
 export function buildAnalyzeUserContent(items: TaskInput[]): string {
@@ -46,8 +57,8 @@ export function buildAnalyzeUserContent(items: TaskInput[]): string {
 
   return `Here is the founder's task audit for the week (${items.length} task${
     items.length === 1 ? '' : 's'
-  }). Score every row into a DRIP quadrant, a value tier, and a keep/delegate/eliminate
-recommendation, then recommend the first hire.
+  }). Score every row into a DRIP quadrant, a value tier, a revenue-proximity tag, and a
+keep/delegate/eliminate recommendation, then recommend the first hire.
 
 ${rows}`;
 }
