@@ -14,6 +14,10 @@ describe('resolveAuditTitle', () => {
     expect(resolveAuditTitle('')).toBe(DEFAULT_AUDIT_TITLE);
     expect(resolveAuditTitle('   ')).toBe(DEFAULT_AUDIT_TITLE);
   });
+
+  it('caps an oversized title at 120 chars', () => {
+    expect(resolveAuditTitle('x'.repeat(200))).toHaveLength(120);
+  });
 });
 
 describe('asHireRole', () => {

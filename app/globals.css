@@ -1086,6 +1086,67 @@ body {
   line-height: 1.6;
 }
 
+/* ============================ SOP PANEL ============================ */
+.sop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sop-item {
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sop-task {
+  font-family: var(--f-body);
+  font-size: 15px;
+  color: var(--ink);
+}
+.sop-body {
+  margin: 0;
+  padding: 16px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-family: var(--f-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ============================ INVITE FORM ============================ */
+.invite-form {
+  max-width: 520px;
+}
+.invite-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.invite-row .signin-input {
+  flex: 1;
+}
+.invite-ok {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--good);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;

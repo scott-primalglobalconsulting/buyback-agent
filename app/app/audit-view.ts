@@ -9,10 +9,11 @@ export type HireRole = (typeof HIRE_ROLES)[number];
 export const DEFAULT_AUDIT_TITLE = 'Weekly time audit';
 
 // Trim the user-supplied title and fall back to the default when it is empty or
-// whitespace-only. The server action resolves the title through this so a blank
-// field never persists an empty audit title.
+// whitespace-only. Capped at 120 chars so an oversized title can never bloat the
+// stored row or break the layout. The server action resolves the title through
+// this so a blank field never persists an empty audit title.
 export function resolveAuditTitle(raw: string): string {
-  const trimmed = raw.trim();
+  const trimmed = raw.trim().slice(0, 120);
   return trimmed.length > 0 ? trimmed : DEFAULT_AUDIT_TITLE;
 }
 

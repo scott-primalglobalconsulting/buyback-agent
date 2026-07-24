@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation';
 import { getAudit } from '@/lib/db/audits';
+import { getSopsForAudit } from '@/lib/db/sops';
 import { asHireRole } from '../../audit-view';
 import { BuybackRate } from '@/components/BuybackRate';
 import { DripDashboard } from '@/components/DripDashboard';
 import { TopTasks } from '@/components/TopTasks';
 import { ReplacementLadder } from '@/components/ReplacementLadder';
 import { AuditTable } from '@/components/AuditTable';
+import { SopPanel } from './sop-panel';
 
 // Persisted audit detail. Server component — getAudit is RLS-scoped, so a caller
 // who is not a member of the audit's workspace gets null -> 404 (no leak of
@@ -18,7 +20,6 @@ import { AuditTable } from '@/components/AuditTable';
 // first-hire stat) instead of crashing. Audits created through the new-audit
 // form always carry a summary, so the null path is the legacy/edge case.
 //
-// The SOP generation button + workspace invite are Task 5.3d — NOT here.
 export default async function AuditDetailPage({
   params,
 }: {
@@ -30,6 +31,19 @@ export default async function AuditDetailPage({
 
   const { items, summary } = audit;
   const firstHireRole = asHireRole(summary.firstHireRole);
+
+  // Tasks the analysis says to hand off — each gets a Generate SOP control.
+  const delegateItems = items.filter((it) => it.recommendation === 'delegate');
+
+  // Already-persisted SOPs, keyed by audit_item id. getSopsForAudit orders newest
+  // first, so the first row seen per item is the latest; keep that one.
+  const persistedSops = await getSopsForAudit(audit.id);
+  const initialSops: Record<string, string> = {};
+  for (const row of persistedSops) {
+    if (row.content_md != null && !(row.audit_item_id in initialSops)) {
+      initialSops[row.audit_item_id] = row.content_md;
+    }
+  }
 
   return (
     <>
@@ -80,6 +94,14 @@ export default async function AuditDetailPage({
           <h2>Every task, scored</h2>
         </div>
         <AuditTable items={items} />
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <span className="eyebrow">Transfer step</span>
+          <h2>Delegation SOPs</h2>
+        </div>
+        <SopPanel items={delegateItems} initialSops={initialSops} />
       </section>
     </>
   );

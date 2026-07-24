@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { listWorkspacesForUser } from '@/lib/db/workspaces';
 import { listAudits } from '@/lib/db/audits';
 import { NewAuditForm } from './new-audit-form';
+import { InviteForm } from './invite-form';
 
 // Authed home: the user's audit history + the new-audit entry form. Server
 // component — reads through lib/db only (RLS scopes both queries to the caller's
@@ -52,7 +53,7 @@ export default async function AppHome() {
           <div className="audit-empty">
             <p>
               No audits yet. Enter a week above (or load the sample week) and run
-              your first analysis — it will appear here.
+              your first analysis. It will appear here.
             </p>
           </div>
         ) : (
@@ -67,6 +68,14 @@ export default async function AppHome() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <span className="eyebrow">Your team</span>
+          <h2>Invite a teammate</h2>
+        </div>
+        <InviteForm workspaceId={ws.id} />
       </section>
     </>
   );
