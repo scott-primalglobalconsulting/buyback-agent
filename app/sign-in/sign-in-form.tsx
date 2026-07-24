@@ -6,6 +6,13 @@
 import { useState } from 'react';
 import { createBrowserClient } from '@/lib/db/browser-client';
 
+// The Inbucket hint only applies to the LOCAL Supabase stack (which captures
+// outbound mail in Inbucket). On a hosted project mail is really delivered, so
+// the hint is hidden. NEXT_PUBLIC_SUPABASE_URL is inlined at build time.
+const USES_LOCAL_INBUCKET = /localhost|127\.0\.0\.1/.test(
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+);
+
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
 export function SignInForm({ initialError }: { initialError?: string }) {
@@ -47,10 +54,12 @@ export function SignInForm({ initialError }: { initialError?: string }) {
           We sent a magic sign-in link to <b>{email.trim()}</b>. Open it to
           finish signing in. The link lands you back here automatically.
         </p>
-        <p className="disclaimer">
-          Local dev: outbound mail is captured by the local inbox (Inbucket) at
-          http://127.0.0.1:56324 rather than actually delivered.
-        </p>
+        {USES_LOCAL_INBUCKET ? (
+          <p className="disclaimer">
+            Local dev: outbound mail is captured by the local inbox (Inbucket)
+            at http://127.0.0.1:56324 rather than actually delivered.
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -89,10 +98,12 @@ export function SignInForm({ initialError }: { initialError?: string }) {
           </button>
         </div>
       </form>
-      <p className="disclaimer">
-        Local dev: the magic link is captured by the local mail inbox (Inbucket)
-        at http://127.0.0.1:56324, not sent to a real mailbox.
-      </p>
+      {USES_LOCAL_INBUCKET ? (
+        <p className="disclaimer">
+          Local dev: the magic link is captured by the local mail inbox
+          (Inbucket) at http://127.0.0.1:56324, not sent to a real mailbox.
+        </p>
+      ) : null}
     </div>
   );
 }
