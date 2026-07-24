@@ -74,9 +74,10 @@ Requirements:
 - Describe the delegatable MECHANICS of the task, not a sales or growth philosophy. Do not prescribe
   a specific outreach volume, a lead-list size, or a multi-tier pricing structure unless the task
   description itself calls for one.
-- Do NOT assume a funded tool stack or an existing team. Never invent specific paid products. When a
-  tool is genuinely required, name the CATEGORY (for example "a spreadsheet", "an email client") and
-  prefer free or AI-native options.
+- Do NOT assume a funded tool stack or an existing team. When a step needs a tool, name ONLY its
+  generic category (for example "a spreadsheet", "an email client", "a professional network", "an
+  email-finder tool", "a scheduling link") — never a specific product, brand, or service name, not
+  even a free or free-tier one. Prefer free or AI-native options over anything that costs money.
 - definitionOfDone: the observable condition that proves the task is complete and correct.
 - toolsNeeded: list only tools the task truly requires, matched to the founder's stated budget.
   Empty only if genuinely none.`;

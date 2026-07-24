@@ -32,6 +32,15 @@ describe('SOP prompt fit', () => {
       expect(s).not.toContain(banned);
     }
   });
+  it('forbids naming any specific product or brand, even a free tier', () => {
+    // Live smoke showed the model name-dropping free-tier products (Sales
+    // Navigator, Hunter). The prompt must instruct category-only naming with no
+    // brand names at all, not merely "no paid products".
+    const s = SOP_SYSTEM.toLowerCase();
+    expect(s).toContain('generic category');
+    expect(s).toContain('never a specific product');
+    expect(s).toContain('free or free-tier');
+  });
   it('adapts to a solo / no-budget operator', () => {
     const item: ScoredItem = {
       task: 'Cold outreach',
