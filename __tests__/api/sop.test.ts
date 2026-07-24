@@ -81,6 +81,26 @@ describe('POST /api/sop', () => {
     expect(generateSOP).not.toHaveBeenCalled();
   });
 
+  it('returns 413 when the item task exceeds the cap — no API call', async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue('user-1');
+
+    const item = { ...ITEM, task: 'x'.repeat(501) };
+    const res = await POST(post({ item }));
+
+    expect(res.status).toBe(413);
+    expect(generateSOP).not.toHaveBeenCalled();
+  });
+
+  it('returns 413 when the item rationale exceeds the cap — no API call', async () => {
+    vi.mocked(getSessionUserId).mockResolvedValue('user-1');
+
+    const item = { ...ITEM, rationale: 'x'.repeat(2001) };
+    const res = await POST(post({ item }));
+
+    expect(res.status).toBe(413);
+    expect(generateSOP).not.toHaveBeenCalled();
+  });
+
   it('returns the validated SOP as JSON for an authed, valid request', async () => {
     vi.mocked(getSessionUserId).mockResolvedValue('user-1');
     vi.mocked(generateSOP).mockResolvedValue(SOP);
