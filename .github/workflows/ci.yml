@@ -12,7 +12,11 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
+      # npm install (not npm ci): some transitive wasm-binding optional deps
+      # (@emnapi via @rolldown/@unrs/sharp) drift by patch version across
+      # platforms, so a macOS-generated lockfile fails strict `npm ci` on the
+      # Linux runner. `npm install` re-resolves the in-range optional deps here.
+      - run: npm install --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
