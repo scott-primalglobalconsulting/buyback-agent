@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+### Task 5.3 — Auth, persisted audits, SOP generation, teammate invite (2026-07-23)
+
+Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
+4.8; controller-witnessed the security/cost gates live against the local stack.
+
+- **5.3a auth (`509aa2c`):** magic-link sign-in (`signInWithOtp`) + `app/auth/
+  callback` code->session exchange + `app/app` session gate (`getUser()`-verified,
+  no open redirect) + first-sign-in personal-workspace bootstrap. Sign-out revokes
+  server-side. Redirect globs added to `config.toml`.
+- **5.3b data layer (`b88fd21`):** migration `0004` persists the LLM summary
+  (`first_hire_role`/`first_hire_justification`, additive nullable, no RLS change);
+  `getAudit` now returns `audit_item` ids + summary; `AuditWithItems.items` is
+  `(ScoredItem & {id})[]`. Bootstrap moved layout->callback (closes the
+  concurrent double-create); session-refresh `middleware.ts` added.
+- **5.3c authed flow (`76ce7aa`):** `/app` audit list + new-audit form (editable
+  rows, "Load sample week") that streams the authed analysis (honest skeleton, no
+  fake thinking), persists via a `persistAudit` server action that re-validates
+  with `AnalysisResultSchema` (never trusts the client), and opens the persisted
+  detail page (`getAudit` null -> `notFound()`, no cross-tenant leak). Title capped.
+- **5.3d SOP + invite (`25046f4`, hardened `ea2f461`):** auth-gated `/api/sop`
+  (401 first, so it cannot bleed the API; payload fully bounded -> `task`<=500 via
+  `GUARD_LIMITS`, `rationale`/`context`<=2000 -> 413; errors hidden). Pure
+  `sopToMarkdown` (TDD); per-delegate-task "Generate SOP" -> render (React-escaped,
+  no `dangerouslySetInnerHTML`) -> `saveSop`. Teammate invite: owner-checked BEFORE
+  the service-role email lookup (no enumeration by non-owners).
+- **Controller-witnessed live (local stack):** magic-link round-trip (founder-a
+  created + workspace bootstrapped, DB-confirmed); authed analyze->persist->reopen
+  (14s live call, DB shows `first_hire_role=admin` + 10 items); cross-user RLS
+  through the app (founder-b gets 404 on founder-a's audit); live SOP generation
+  persisted (3200-char markdown keyed to the correct `audit_item`).
+- Suite 64 tests green; typecheck + lint clean; `next build` compiles.
+
 ### Task 5.3b — Persist audit summary + getAudit item ids + auth hardening (2026-07-23)
 
 - **Migration `0004_audit_summary.sql`:** additive nullable `first_hire_role` /
