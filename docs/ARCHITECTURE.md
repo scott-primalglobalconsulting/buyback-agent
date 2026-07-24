@@ -1,6 +1,6 @@
 # Buyback Agent — Architecture
 
-Last updated: 2026-07-23 16:14 EST
+Last updated: 2026-07-23 20:17 EST
 
 ## Row-Level Security
 
@@ -299,3 +299,85 @@ Anon and authenticated can neither read nor write the tables nor increment the
 counters (denied at the table-privilege layer, behind RLS deny-all); only the
 service role reaches them, and the counter RPCs increment atomically. Verified,
 not asserted.
+
+## Isolation boundaries
+
+Three hard rules keep the domain logic pure, the data layer singular, and the
+secrets server-side. They are enforced by imports and by review, not left to
+discipline.
+
+```
+  Browser (client components)
+    |  fetch('/api/analyze' | '/api/sop' | '/api/export/[id]')
+    |  server actions (persistAudit, persistSop, inviteByEmail, signOut)
+    v
+  Routes + Server Components + Server Actions
+    |                         |
+    | consumes                | consumes
+    v                         v
+  lib/agent   lib/buyback     lib/db  ------> Supabase (Postgres + Auth + RLS)
+    |  (pure)    (pure)          |  (only Supabase touchpoint)
+    v                           |
+  @anthropic-ai/sdk             +--> service-role client: ONLY lib/db/guard.ts
+  (server only, key never                 (deny-all abuse-guard tables) and the
+   in the client bundle)                  owner-gated invite email lookup
+
+  lib/agent, lib/buyback: no React, Next, Supabase, or DB imports.
+  Routes/components: never import @anthropic-ai/sdk or a Supabase client directly.
+```
+
+- **`lib/agent` and `lib/buyback` are pure.** They import zod and each other,
+  nothing else. Deterministic input to validated output, unit tested without a
+  network or a database. `lib/buyback` owns every rollup (`quadrantHourRollup`,
+  `buybackRate`, `topTasksToOffload`); components never recompute money math.
+- **`lib/db` is the sole Supabase touchpoint.** Server components, routes, and
+  server actions go through it. The auth session check (`getSessionUserId`), the
+  cookie-bound server client, and the session-refresh middleware helper all live
+  under `lib/db`. `@supabase/ssr` is imported nowhere else.
+- **The client never holds a secret or a raw client.** The Anthropic key is
+  server-only. The service-role key (which bypasses RLS) is confined to
+  `lib/db/guard.ts` (the deny-all counter tables) and the owner-gated invite
+  email lookup. Client components reach the agent only through `fetch`, and
+  persist only through server actions. `import 'server-only'` guards the modules
+  that must never be bundled for the browser.
+
+## LLM reliability: forced tool use plus validate-and-retry
+
+The agent never parses free text. `structuredToolCall` (in `lib/agent/client.ts`)
+forces the model into a single tool call with a hand-written JSON input schema,
+then validates the returned arguments against the matching Zod schema. On a
+validation failure it retries once, feeding the exact validation error back to
+the model as a correction; a second failure throws `StructuredCallError`. The
+effect is a contract: downstream code receives a schema-valid `AnalysisResult`
+or `Sop`, or the call fails loudly. There is no "mostly correct JSON" path.
+
+A drift test asserts the hand-written tool `input_schema` stays in lockstep with
+the Zod enums, so the two definitions of the DRIP quadrants, value tiers, and
+recommendations cannot silently diverge. `npm run eval` closes the loop against
+the live model: it runs fixtures and checks structure, DRIP assignment, and
+recommendation sanity, so a prompt change is measured rather than hoped.
+
+## Streaming design decision
+
+Analysis is delivered over Server Sent Events (`data: {json}\n\n`) with a small,
+documented event shape shared by the route and both consumers: `thinking`,
+`result`, `error`. The route branches on HTTP status before the body is read as
+a stream, because the guard verdicts (rate limited, unavailable) are plain JSON
+responses (429, 503), not streams.
+
+Two decisions are worth calling out:
+
+- **Honest loading, not fabricated reasoning.** Forcing a tool call means the
+  model returns the whole structured result in one shot, with no streamed
+  reasoning to surface. Rather than fake a "thinking" log, the UI shows a real
+  skeleton while the request is in flight and reveals the dashboard when the
+  single `result` event lands. The `thinking` event stays in the contract for a
+  future non-forced path, but nothing emits invented reasoning.
+- **Cache write before the terminal yield.** On the anonymous demo, a live
+  computation caches its result so the next visitor is served for free. Because
+  the browser stops reading the moment it sees `result`, the stream is cancelled
+  and any work placed after the final yield is skipped. The cache write
+  therefore runs immediately before the terminal `yield`, so an early-cancelling
+  client still populates the cache. Verified live: a reader that cancels right
+  after `result` still writes the row, and the next request serves from cache
+  with no model call.

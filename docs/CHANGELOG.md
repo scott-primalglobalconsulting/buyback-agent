@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Task 6.1 — README + ARCHITECTURE + LICENSE (2026-07-23)
+
+- `README.md` (public-facing, no em/en dashes): what-it-is + disclaimer, the
+  no-signup `/demo` path (live link placeholder until deploy), the concierge-to-
+  software motion mapped to the Buyback Loop + DRIP, the honest build figure, the
+  three isolation boundaries, the engineering choices (forced tool-use +
+  validate-and-retry, eval harness, RLS, abuse guard, honest streaming states),
+  local-run steps, and the intentional-YAGNI roadmap. CI badge points at the
+  repo created in Phase 7.
+- `docs/ARCHITECTURE.md` extended with the isolation-boundary diagram, the LLM
+  reliability pattern (forced tool call + Zod validate-and-retry + drift test +
+  eval), and the streaming design decision (honest states; cache-write-before-
+  terminal-yield). RLS + cross-workspace isolation + deny-all evidence already
+  present.
+- `LICENSE`: MIT (c) 2026 Scott Steele.
+- **Build figure:** the full project (Phases 1 to 5, 45 commits) was built solo
+  on 2026-07-23, roughly 7.5 hours wall-clock and ~6.2 hours active by commit
+  timestamps, with AI tooling. README states "about 7 hours."
+
 ### Task 5.4 — Single-file markdown export (2026-07-23)
 
 - `lib/export.ts` `auditToMarkdown(audit, sops)` (PURE — imports only
