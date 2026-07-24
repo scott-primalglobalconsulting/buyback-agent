@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### Task C4 — persist revenue-proximity + audit context (2026-07-24)
+
+Commit `c85a89d`. Migration 0005 (additive, nullable, no RLS change) plus the
+DB row-type + mapping wiring so the model's per-task `revenueProximity` and the
+founder's audit-level context persist.
+
+- **`supabase/migrations/0005_revenue_context.sql`.** `audit_items` gains
+  `revenue_proximity` (`text`); `audits` gains `is_at_revenue` (`boolean`),
+  `annual_income` (`numeric`), `team` (`text`), `tool_budget` (`text`) — all
+  NULLABLE. Applied locally via `supabase migration up`; columns confirmed with
+  `\d+`. No new table/policy/RPC/grant — existing `0002` row-level policies
+  already gate the new columns; isolation unaffected, no backfill.
+- **`lib/db/types.ts`.** `AuditItemRow.revenue_proximity`, `AuditRow.{is_at_revenue,
+  annual_income,team,tool_budget}`, and new `AuditMeta` input type. Stays a pure
+  types module.
+- **`lib/db/audits.ts`.** `rowToScoredItem` maps `revenue_proximity ?? undefined`;
+  `createAudit` gains a `meta?: AuditMeta` param and persists the four audit
+  columns + the item column. No caller passes `meta` yet (Task C5 wires it).
+- **`docs/architecture/migrations.md`.** 0005 catalog entry + cross-workspace
+  isolation note (mirrors 0004).
+- Gate: `npm run typecheck`, `npm run lint`, `npm test` (92) all green. Test
+  fixture `__tests__/export.test.ts` updated for the four new required row fields.
+
 ### Report-quality Tier A — credibility relabels (2026-07-24)
 
 Source: `docs/REVIEW-2026-07-24-report-quality.md` (CoS report-quality review).
