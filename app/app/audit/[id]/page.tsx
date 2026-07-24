@@ -50,6 +50,9 @@ export default async function AuditDetailPage({
       <div className="section-head">
         <span className="eyebrow">Audit</span>
         <h2>{audit.title ?? 'Untitled audit'}</h2>
+        <a className="btn btn-ghost" href={`/api/export/${audit.id}`}>
+          Download markdown
+        </a>
       </div>
 
       <section className="section">
