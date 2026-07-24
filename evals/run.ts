@@ -1,19 +1,23 @@
 import { analyzeAudit } from '@/lib/agent/analyze';
-import { ScoredItemSchema } from '@/lib/agent/schema';
+import { ScoredItemSchema, REVENUE_PROXIMITY } from '@/lib/agent/schema';
 import { FIXTURES } from './fixtures';
 
 // On-demand eval harness (npm run eval). NOT run in CI: it calls the live Anthropic
-// API and costs real spend. Asserts two things per fixture:
+// API and costs real spend. Asserts three things per fixture:
 //   (a) structure — the returned item parses ScoredItemSchema (always required);
-//   (b) sanity    — its quadrant/recommendation fall inside the fixture's accepted set.
+//   (b) sanity    — its quadrant/recommendation fall inside the fixture's accepted set;
+//   (c) revenue   — revenueProximity is PRESENT and in the vocab. The field is
+//                   optional in ScoredItemSchema (read back-compat), so structure
+//                   alone cannot prove the live model emits it — this gate does.
 // Items are matched to fixtures by index/order (analyzeAudit preserves input order).
-// Exits non-zero on ANY structure or sanity failure, or if ANTHROPIC_API_KEY is unset.
+// Exits non-zero on ANY structure, sanity, or revenue failure, or if ANTHROPIC_API_KEY is unset.
 
 interface RowResult {
   task: string;
   structureOk: boolean;
   quadrantOk: boolean;
   recommendationOk: boolean;
+  revenueOk: boolean;
   detail: string;
 }
 
@@ -60,6 +64,7 @@ async function main(): Promise<void> {
         structureOk: false,
         quadrantOk: false,
         recommendationOk: false,
+        revenueOk: false,
         detail: parsed.error.issues.map((iss) => iss.message).join('; '),
       });
       continue;
@@ -68,6 +73,11 @@ async function main(): Promise<void> {
     // (b) Sanity — quadrant/recommendation inside the accepted range.
     const quadrantOk = fixture.expectQuadrant.includes(parsed.data.dripQuadrant);
     const recommendationOk = fixture.expectRecommendation.includes(parsed.data.recommendation);
+    // (c) Revenue — the model must actually emit a valid revenueProximity. Optional
+    // in the schema (old-data read compat), so assert presence + vocab explicitly.
+    const revenueOk =
+      parsed.data.revenueProximity != null &&
+      (REVENUE_PROXIMITY as readonly string[]).includes(parsed.data.revenueProximity);
     const detailParts: string[] = [];
     if (!quadrantOk) {
       detailParts.push(
@@ -79,12 +89,18 @@ async function main(): Promise<void> {
         `recommendation ${parsed.data.recommendation} not in {${fixture.expectRecommendation.join(', ')}}`,
       );
     }
+    if (!revenueOk) {
+      detailParts.push(
+        `revenueProximity ${parsed.data.revenueProximity ?? '(missing)'} not in {${REVENUE_PROXIMITY.join(', ')}}`,
+      );
+    }
 
     rows.push({
       task: fixture.task,
       structureOk: true,
       quadrantOk,
       recommendationOk,
+      revenueOk,
       detail: detailParts.join('; ') || 'ok',
     });
   }
@@ -92,22 +108,22 @@ async function main(): Promise<void> {
   // Per-fixture PASS/FAIL table.
   console.log('\nEval results');
   console.log(
-    `${pad('TASK', 44)} ${pad('STRUCT', 8)} ${pad('QUAD', 6)} ${pad('REC', 6)} RESULT`,
+    `${pad('TASK', 44)} ${pad('STRUCT', 8)} ${pad('QUAD', 6)} ${pad('REC', 6)} ${pad('REV', 6)} RESULT`,
   );
-  console.log('-'.repeat(84));
+  console.log('-'.repeat(92));
   for (const row of rows) {
-    const pass = row.structureOk && row.quadrantOk && row.recommendationOk;
+    const pass = row.structureOk && row.quadrantOk && row.recommendationOk && row.revenueOk;
     console.log(
       `${pad(row.task, 44)} ${pad(row.structureOk ? 'ok' : 'FAIL', 8)} ` +
         `${pad(row.quadrantOk ? 'ok' : 'FAIL', 6)} ${pad(row.recommendationOk ? 'ok' : 'FAIL', 6)} ` +
-        `${pass ? 'PASS' : 'FAIL — ' + row.detail}`,
+        `${pad(row.revenueOk ? 'ok' : 'FAIL', 6)} ${pass ? 'PASS' : 'FAIL — ' + row.detail}`,
     );
   }
 
   const failures = rows.filter(
-    (r) => !r.structureOk || !r.quadrantOk || !r.recommendationOk,
+    (r) => !r.structureOk || !r.quadrantOk || !r.recommendationOk || !r.revenueOk,
   );
-  console.log('-'.repeat(84));
+  console.log('-'.repeat(92));
   console.log(`${rows.length - failures.length}/${rows.length} passed\n`);
 
   if (failures.length > 0) {
