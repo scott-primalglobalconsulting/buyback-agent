@@ -18,12 +18,13 @@ const MODEL = 'claude-sonnet-5';
 export async function generateSOP(
   item: ScoredItem,
   workspaceContext: string,
+  opts?: { team?: 'solo' | 'has-team'; toolBudget?: 'none' | 'some' },
   caller: ToolCaller = createAnthropicToolCaller(MODEL),
 ): Promise<Sop> {
   return structuredToolCall({
     caller,
     system: SOP_SYSTEM,
-    userContent: buildSopUserContent(item, workspaceContext),
+    userContent: buildSopUserContent(item, workspaceContext, opts),
     toolName: TOOL_NAME,
     toolSchema: sopToolJsonSchema,
     validate: (raw) => SopSchema.parse(raw),

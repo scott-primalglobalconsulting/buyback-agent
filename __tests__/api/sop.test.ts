@@ -111,7 +111,10 @@ describe('POST /api/sop', () => {
     expect(res.headers.get('content-type')).toContain('application/json');
     const body = (await res.json()) as Sop;
     expect(body.purpose).toBe(SOP.purpose);
-    expect(generateSOP).toHaveBeenCalledWith(ITEM, 'Uses QuickBooks.');
+    expect(generateSOP).toHaveBeenCalledWith(ITEM, 'Uses QuickBooks.', {
+      team: undefined,
+      toolBudget: undefined,
+    });
   });
 
   it('surfaces a generic 500 (never the API error) when generation throws', async () => {

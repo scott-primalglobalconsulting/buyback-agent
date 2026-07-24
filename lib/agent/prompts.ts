@@ -71,15 +71,34 @@ Requirements:
 - purpose: one or two sentences on what this task achieves and why it matters.
 - steps: an ordered, concrete list. Each step is a single action, specific enough to execute without
   guessing. No vague verbs ("handle", "manage") — say exactly what to do.
+- Describe the delegatable MECHANICS of the task, not a sales or growth philosophy. Do not prescribe
+  a specific outreach volume, a lead-list size, or a multi-tier pricing structure unless the task
+  description itself calls for one.
+- Do NOT assume a funded tool stack or an existing team. Never invent specific paid products. When a
+  tool is genuinely required, name the CATEGORY (for example "a spreadsheet", "an email client") and
+  prefer free or AI-native options.
 - definitionOfDone: the observable condition that proves the task is complete and correct.
-- toolsNeeded: the specific tools, systems, logins, or files required. Empty only if genuinely none.`;
+- toolsNeeded: list only tools the task truly requires, matched to the founder's stated budget.
+  Empty only if genuinely none.`;
 
-export function buildSopUserContent(item: TaskInput, context: string): string {
+export function buildSopUserContent(
+  item: TaskInput,
+  context: string,
+  opts?: { team?: 'solo' | 'has-team'; toolBudget?: 'none' | 'some' },
+): string {
+  const team =
+    opts?.team === 'has-team' ? 'The founder has a small team.' : 'The founder works solo.';
+  const budget =
+    opts?.toolBudget === 'some'
+      ? 'They have some budget for paid tools.'
+      : 'They have no budget for paid tools; prefer free or AI-native options.';
   return `Write a delegation SOP for this task the founder is transferring:
 
 Task: "${item.task}"
 Time it currently takes the founder: ${item.hoursPerWeek} hrs/week
 Cost to delegate: $${item.costToDelegate}/hr
+
+Operator context: ${team} ${budget}
 
 Additional context about how the founder does it today:
 ${context}`;

@@ -110,7 +110,16 @@ export default async function AuditDetailPage({
           <span className="eyebrow">Transfer step</span>
           <h2>Delegation SOPs</h2>
         </div>
-        <SopPanel items={delegateItems} initialSops={initialSops} />
+        <SopPanel
+          items={delegateItems}
+          initialSops={initialSops}
+          team={audit.team === 'solo' || audit.team === 'has-team' ? audit.team : undefined}
+          toolBudget={
+            audit.tool_budget === 'none' || audit.tool_budget === 'some'
+              ? audit.tool_budget
+              : undefined
+          }
+        />
       </section>
     </>
   );
