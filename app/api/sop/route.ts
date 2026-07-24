@@ -59,7 +59,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const parsed = SopRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return jsonError(400, 'Invalid request: expected { item, context? }.');
+    return jsonError(400, 'Invalid request: expected { item, context?, team?, toolBudget? }.');
   }
 
   // Authed callers are session-gated and accountable, so the payload is fully

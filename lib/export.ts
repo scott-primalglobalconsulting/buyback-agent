@@ -6,7 +6,7 @@
 // the clock — any timestamp must be passed in by the caller. This keeps it
 // unit-testable and safe to import from anywhere.
 import { HIRE_ROLES } from '@/lib/agent/schema';
-import { buybackHourlyRate, buybackRate } from '@/lib/buyback/rate';
+import { buybackHourlyRate, buybackRate, isAboveBuybackRate } from '@/lib/buyback/rate';
 import { soldVsBuilt } from '@/lib/buyback/revenue';
 import { quadrantHourRollup } from '@/lib/buyback/rollups';
 import { DRIP_QUADRANTS } from '@/lib/buyback/types';
@@ -77,11 +77,21 @@ export function auditToMarkdown(audit: AuditWithItems, sops: SopRow[]): string {
 
   // The full ledger, one row per scored task.
   lines.push('## Every task, scored', '');
+  // When a real Buyback Rate exists (positive income), fold an at/above-vs-below
+  // signal into the Value cell so the export mirrors the in-app ledger marker.
+  // No new column: the rate context rides inside the existing Value text.
+  const hourlyRate = income != null && income > 0 ? buybackHourlyRate(income) : null;
   lines.push('| Task | Hrs/wk | $/hr | Value | Revenue | DRIP | Call |');
   lines.push('| --- | ---: | ---: | --- | --- | --- | --- |');
   for (const it of items) {
+    const valueCell =
+      hourlyRate != null
+        ? `${VALUE_TIER_LABEL[it.valueTier]} (${
+            isAboveBuybackRate(it, hourlyRate) ? 'at your rate' : 'below your rate'
+          })`
+        : VALUE_TIER_LABEL[it.valueTier];
     lines.push(
-      `| ${cell(it.task)} | ${it.hoursPerWeek} | ${it.costToDelegate} | ${cell(VALUE_TIER_LABEL[it.valueTier])} | ${cell(it.revenueProximity ?? 'not scored')} | ${it.dripQuadrant} | ${it.recommendation} |`,
+      `| ${cell(it.task)} | ${it.hoursPerWeek} | ${it.costToDelegate} | ${cell(valueCell)} | ${cell(it.revenueProximity ?? 'not scored')} | ${it.dripQuadrant} | ${it.recommendation} |`,
     );
   }
   lines.push('');

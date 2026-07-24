@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getAudit } from '@/lib/db/audits';
 import { getSopsForAudit } from '@/lib/db/sops';
 import { asHireRole } from '../../audit-view';
+import { buybackHourlyRate } from '@/lib/buyback/rate';
 import { BuybackRate } from '@/components/BuybackRate';
 import { RevenueSummary } from '@/components/RevenueSummary';
 import { DripDashboard } from '@/components/DripDashboard';
@@ -102,7 +103,14 @@ export default async function AuditDetailPage({
           <span className="eyebrow">The full ledger</span>
           <h2>Every task, scored</h2>
         </div>
-        <AuditTable items={items} />
+        <AuditTable
+          items={items}
+          hourlyRate={
+            audit.annual_income != null && audit.annual_income > 0
+              ? buybackHourlyRate(audit.annual_income)
+              : undefined
+          }
+        />
       </section>
 
       <section className="section">

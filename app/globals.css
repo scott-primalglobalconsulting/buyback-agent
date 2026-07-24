@@ -615,6 +615,22 @@ body {
   font-family: var(--f-mono);
   font-size: 12px;
 }
+/* Per-task Buyback Rate marker: sits under the value tier, text paired with a
+   subtle tone (never color alone). Theme tokens flip for light and dark. */
+.rate-mark {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.rate-mark--above {
+  color: var(--good);
+}
+.rate-mark--below {
+  color: var(--ink-3);
+}
 
 /* ============================ REVENUE SUMMARY ============================ */
 .rev-summary {

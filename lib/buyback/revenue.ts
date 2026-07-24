@@ -1,4 +1,4 @@
-import type { ScoredItem, RevenueProximity } from './types';
+import type { ScoredItem, RevenueProximity, DripQuadrant } from './types';
 
 type RevenueRollup = Record<RevenueProximity, number> & { unknown: number };
 
@@ -26,7 +26,7 @@ export function soldVsBuilt(items: ScoredItem[]): { revenueDirect: number; other
 // Caution: non-revenue "keep" time (Invest/Produce) crowding out selling. Fires
 // when non-revenue Invest+Produce hours >= revenue-direct hours AND at least one
 // item carries proximity (so old data stays silent). Sharper for pre-revenue.
-const KEEP_QUADRANTS = new Set(['Invest', 'Produce']);
+const KEEP_QUADRANTS: ReadonlySet<DripQuadrant> = new Set(['Invest', 'Produce']);
 export function revenueCaution(
   items: ScoredItem[],
   opts: { isAtRevenue: boolean },

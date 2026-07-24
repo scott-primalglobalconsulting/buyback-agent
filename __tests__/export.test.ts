@@ -217,6 +217,23 @@ describe('auditToMarkdown', () => {
     expect(md).not.toContain('Buyback Rate');
   });
 
+  it('marks each ledger row above/below the Buyback Rate when annual_income is set', () => {
+    // Rate = 200000/2000/4 = $25/hr. Tiers above $25 read "at your rate";
+    // the $10 tier (support) reads "below your rate".
+    const md = auditToMarkdown(AUDIT_WITH_INCOME, SOPS);
+    expect(md).toContain('at your rate');
+    expect(md).toContain('below your rate');
+    // The $10 support task is below the rate; the $10,000 vision task is at it.
+    expect(md).toContain('$10 (below your rate)');
+    expect(md).toContain('$10,000 (at your rate)');
+  });
+
+  it('omits the per-row Buyback Rate markers when annual_income is null', () => {
+    const md = auditToMarkdown(AUDIT, SOPS);
+    expect(md).not.toContain('at your rate');
+    expect(md).not.toContain('below your rate');
+  });
+
   it('renders a Revenue column in the scored table', () => {
     const md = auditToMarkdown(AUDIT_WITH_PROXIMITY, SOPS);
     expect(md).toMatch(/\|\s*Revenue\s*\|/);

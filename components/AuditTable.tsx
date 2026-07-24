@@ -1,4 +1,5 @@
 import type { ScoredItem, ValueTier } from "@/lib/buyback/types";
+import { isAboveBuybackRate } from "@/lib/buyback/rate";
 
 // The full ledger: every task scored and called. Numbers are mono, tabular, and
 // right-aligned; the DRIP quadrant reads as a labeled chip (dot + label, never
@@ -14,7 +15,17 @@ const TIER_LABEL: Record<ValueTier, string> = {
 // audit_item ids (AuditItemWithId), the demo flow passes plain ScoredItem with
 // none. Key off id when present, else fall back to a task+index key so two tasks
 // sharing a name don't collide.
-export function AuditTable({ items }: { items: (ScoredItem & { id?: string })[] }) {
+export function AuditTable({
+  items,
+  hourlyRate,
+}: {
+  items: (ScoredItem & { id?: string })[];
+  // The founder's Buyback Rate ($/hr). When present (> 0), each row gets a marker
+  // showing whether the task's value is at/above vs below the rate. Absent (e.g.
+  // the demo, which has no income) -> no markers, identical to the prior render.
+  hourlyRate?: number;
+}) {
+  const showRate = hourlyRate != null && hourlyRate > 0;
   return (
     <div className="tbl-wrap">
       <div className="tbl-scroll">
@@ -36,7 +47,16 @@ export function AuditTable({ items }: { items: (ScoredItem & { id?: string })[] 
                 <td className="t-task">{it.task}</td>
                 <td className="num">{it.hoursPerWeek}</td>
                 <td className="num">{it.costToDelegate}</td>
-                <td className="tier">{TIER_LABEL[it.valueTier]}</td>
+                <td className="tier">
+                  {TIER_LABEL[it.valueTier]}
+                  {showRate ? (
+                    isAboveBuybackRate(it, hourlyRate) ? (
+                      <span className="rate-mark rate-mark--above">at your rate</span>
+                    ) : (
+                      <span className="rate-mark rate-mark--below">below your rate</span>
+                    )
+                  ) : null}
+                </td>
                 <td>
                   <span className={`qchip q--${it.dripQuadrant.toLowerCase()}`}>
                     <span className="d" aria-hidden="true" />

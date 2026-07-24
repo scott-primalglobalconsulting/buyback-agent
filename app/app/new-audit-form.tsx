@@ -215,7 +215,9 @@ export function NewAuditForm({ workspaceId }: { workspaceId: string }) {
     const meta = {
       isAtRevenue: isAtRevenue === 'yes',
       annualIncome:
-        Number.isFinite(income) && (income ?? 0) > 0 ? income : undefined,
+        Number.isFinite(income) && (income ?? 0) > 0 && (income ?? 0) <= 100_000_000
+          ? income
+          : undefined,
       team,
       toolBudget,
     };
@@ -362,6 +364,7 @@ export function NewAuditForm({ workspaceId }: { workspaceId: string }) {
           className="signin-input"
           type="number"
           min="0"
+          max="100000000"
           step="1000"
           inputMode="decimal"
           placeholder="e.g. 200000"
