@@ -8,7 +8,8 @@ export function TopTasks({ items }: { items: ScoredItem[] }) {
   return (
     <ol className="toplist">
       {tasks.map((t, i) => (
-        <li key={t.task} className="topitem">
+        // Rank index guarantees a unique key even when two tasks share a name.
+        <li key={`${t.task}-${i}`} className="topitem">
           <span className="rank tnum">{i + 1}</span>
           <span className="name">{t.task}</span>
           <span className={`qchip q--${t.dripQuadrant.toLowerCase()}`}>

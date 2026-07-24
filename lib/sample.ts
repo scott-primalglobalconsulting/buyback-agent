@@ -17,7 +17,7 @@ export const SAMPLE_WEEK: TaskInput[] = [
   { task: 'Manual invoicing', hoursPerWeek: 2, costToDelegate: 35 },
   { task: 'Hiring & interviews', hoursPerWeek: 3, costToDelegate: 120 },
   { task: 'Content & thought leadership', hoursPerWeek: 4, costToDelegate: 90 },
-  { task: 'Sales calls — discovery', hoursPerWeek: 6, costToDelegate: 150 },
+  { task: 'Sales calls, discovery', hoursPerWeek: 6, costToDelegate: 150 },
   { task: 'Product strategy & roadmap', hoursPerWeek: 5, costToDelegate: 250 },
   { task: 'Investor updates', hoursPerWeek: 2, costToDelegate: 200 },
 ];

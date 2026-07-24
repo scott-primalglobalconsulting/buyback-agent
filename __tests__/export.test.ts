@@ -71,27 +71,40 @@ describe('auditToMarkdown', () => {
     expect(md).toContain('# Q3 Founder Audit');
   });
 
-  it('renders the buyback rate as a whole percent with reclaimable vs total hours', () => {
+  it('renders the buyback rate as the exact whole percent with reclaimable vs total hours', () => {
     const md = auditToMarkdown(AUDIT, SOPS);
-    expect(md).toContain('75%');
-    expect(md).toContain('15');
-    expect(md).toContain('20');
+    // Anchor the exact formatted token, not a loose "75%" substring.
+    expect(md).toContain('**Buyback rate: 75%**: 15 of 20 weekly hours are reclaimable.');
   });
 
-  it('renders the DRIP quadrant-hour rollup', () => {
+  it('renders the DRIP quadrant-hour rollup in the DRIP allocation section', () => {
     const md = auditToMarkdown(AUDIT, SOPS);
-    expect(md).toContain('Delegate');
-    expect(md).toContain('Replace');
-    expect(md).toContain('Invest');
-    expect(md).toContain('Produce');
+    // Anchor to the allocation section's `- Quadrant: N hrs/wk` lines, so this
+    // does not pass merely because the quadrant words appear as table columns.
+    // Fixture rollup: Delegate 10, Replace 5, Invest 0, Produce 5.
+    expect(md).toContain('## DRIP allocation');
+    expect(md).toContain('- Delegate: 10 hrs/wk');
+    expect(md).toContain('- Replace: 5 hrs/wk');
+    expect(md).toContain('- Invest: 0 hrs/wk');
+    expect(md).toContain('- Produce: 5 hrs/wk');
   });
 
-  it('renders a scored table row for every item', () => {
+  it('renders a scored table row for every item with a polished value-tier label', () => {
     const md = auditToMarkdown(AUDIT, SOPS);
+    // The export shows thousands-separated tier labels, not the raw enum.
+    const TIER_LABEL: Record<string, string> = {
+      $10: '$10',
+      $100: '$100',
+      $1000: '$1,000',
+      $10000: '$10,000',
+    };
     for (const item of AUDIT.items) {
       expect(md).toContain(item.task);
-      expect(md).toContain(item.valueTier);
+      expect(md).toContain(TIER_LABEL[item.valueTier]);
     }
+    // The $10,000 tier renders formatted, never as the raw enum.
+    expect(md).toContain('$10,000');
+    expect(md).not.toContain('$10000');
     // A markdown table header row exists.
     expect(md).toMatch(/\|\s*Task\s*\|/);
   });
@@ -131,6 +144,33 @@ describe('auditToMarkdown', () => {
     expect(md).toContain('admin');
     expect(md).not.toContain('**admin**');
     expect(md).not.toContain('Admin work eats the most low-value hours.');
+  });
+
+  it('embeds a regenerated SOP only once per audit item', () => {
+    // A regenerated SOP produces two rows for the same audit_item_id (newest
+    // first, matching getSopsForAudit). Only the first-seen (latest) body should
+    // appear — mirrors the audit-detail page dedup.
+    const sops: SopRow[] = [
+      {
+        id: 'sop-book-v2',
+        audit_item_id: 'item-book',
+        content_md: '# Standard Operating Procedure\n\nBOOKKEEPING_SOP_LATEST',
+        created_at: '2026-07-23T03:00:00.000Z',
+      },
+      {
+        id: 'sop-book-v1',
+        audit_item_id: 'item-book',
+        content_md: '# Standard Operating Procedure\n\nBOOKKEEPING_SOP_STALE',
+        created_at: '2026-07-23T01:00:00.000Z',
+      },
+    ];
+    const md = auditToMarkdown(AUDIT, sops);
+    // The latest body is embedded exactly once; the stale one is dropped.
+    const occurrences = (s: string) => md.split(s).length - 1;
+    expect(occurrences('BOOKKEEPING_SOP_LATEST')).toBe(1);
+    expect(md).not.toContain('BOOKKEEPING_SOP_STALE');
+    // Exactly one SOP heading for the item (no duplicate section).
+    expect(occurrences('### SOP: Reconcile the books')).toBe(1);
   });
 
   it('skips SOP rows with null content_md', () => {

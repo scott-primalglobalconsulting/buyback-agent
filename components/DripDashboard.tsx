@@ -14,17 +14,21 @@ const ACTION: Record<DripQuadrant, string> = {
   Produce: "Protect",
 };
 
-export function DripDashboard({ items }: { items: ScoredItem[] }) {
+// Accept an optional id per item (authed/persisted flow supplies it, demo does
+// not) so list keys stay stable when two tasks share a name.
+export function DripDashboard({ items }: { items: (ScoredItem & { id?: string })[] }) {
   const rollup = quadrantHourRollup(items);
   const total = items.reduce((sum, i) => sum + i.hoursPerWeek, 0);
   const maxHrs = Math.max(...DRIP_QUADRANTS.map((q) => rollup[q]), 0);
 
   const tasksByQuadrant = DRIP_QUADRANTS.reduce(
     (acc, q) => {
-      acc[q] = items.filter((i) => i.dripQuadrant === q).map((i) => i.task);
+      acc[q] = items
+        .filter((i) => i.dripQuadrant === q)
+        .map((i) => ({ task: i.task, id: i.id }));
       return acc;
     },
-    {} as Record<DripQuadrant, string[]>,
+    {} as Record<DripQuadrant, { task: string; id?: string }[]>,
   );
 
   const shed = rollup.Delegate + rollup.Replace;
@@ -71,9 +75,9 @@ export function DripDashboard({ items }: { items: ScoredItem[] }) {
               </svg>
               {tasks.length > 0 ? (
                 <div className="qtasks">
-                  {tasks.map((t) => (
-                    <span key={t} className="qtask">
-                      {t}
+                  {tasks.map((t, i) => (
+                    <span key={t.id ?? `${t.task}-${i}`} className="qtask">
+                      {t.task}
                     </span>
                   ))}
                 </div>

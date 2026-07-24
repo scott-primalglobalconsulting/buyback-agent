@@ -10,7 +10,11 @@ const TIER_LABEL: Record<ValueTier, string> = {
   $10000: "$10,000",
 };
 
-export function AuditTable({ items }: { items: ScoredItem[] }) {
+// Accept an optional id per item: the authed/persisted flow supplies stable
+// audit_item ids (AuditItemWithId), the demo flow passes plain ScoredItem with
+// none. Key off id when present, else fall back to a task+index key so two tasks
+// sharing a name don't collide.
+export function AuditTable({ items }: { items: (ScoredItem & { id?: string })[] }) {
   return (
     <div className="tbl-wrap">
       <div className="tbl-scroll">
@@ -26,8 +30,8 @@ export function AuditTable({ items }: { items: ScoredItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {items.map((it) => (
-              <tr key={it.task}>
+            {items.map((it, i) => (
+              <tr key={it.id ?? `${it.task}-${i}`}>
                 <td className="t-task">{it.task}</td>
                 <td className="num">{it.hoursPerWeek}</td>
                 <td className="num">{it.costToDelegate}</td>

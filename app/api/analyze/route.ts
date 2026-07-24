@@ -180,16 +180,26 @@ async function* demoLiveStream(): AsyncGenerator<SseEvent> {
       if (ev.type === 'thinking') {
         yield { type: 'thinking', text: ev.text };
       } else {
+        // Hold the result; do NOT yield it inside the loop. The SSE stream is
+        // pull-driven and the client stops pulling the instant it sees the
+        // `result` event, which cancels this generator — so any write AFTER the
+        // terminal yield never runs. Cache first, yield last (below).
         result = ev.data;
-        yield { type: 'result', result: ev.data };
       }
     }
-    if (result) await putSampleCache(result);
+    if (result) {
+      // Cache BEFORE the terminal yield so the write always lands on the normal
+      // completion path. Costs a few ms before the client sees the result;
+      // correctness over latency on the cost-bearing demo path.
+      await putSampleCache(result);
+      yield { type: 'result', result };
+    }
   } catch {
     try {
       const result = await analyzeAudit(SAMPLE_WEEK);
-      yield { type: 'result', result };
+      // Same ordering rule as above: cache before the terminal yield.
       await putSampleCache(result);
+      yield { type: 'result', result };
     } catch {
       yield { type: 'error', message: GENERIC_ERROR };
     }

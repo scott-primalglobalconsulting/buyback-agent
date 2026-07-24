@@ -29,8 +29,9 @@ export async function GET(request: Request) {
   // First-sign-in bootstrap: guarantee at least one workspace exists. Runs once
   // per sign-in here (moved out of the /app layout) so concurrent renders can't
   // race to double-create. A bootstrap failure must NOT 500 the callback — the
-  // session is already established; log and still land the user in /app, where
-  // a later request can retry.
+  // session is already established; log and still land the user in /app. There
+  // is no automatic retry path — a rare bootstrap failure leaves the user with
+  // no workspace until the next sign-in re-runs this block.
   try {
     const workspaces = await listWorkspacesForUser();
     if (workspaces.length === 0) {

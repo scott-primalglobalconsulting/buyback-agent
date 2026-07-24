@@ -10,6 +10,16 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+// Mirror of lib/db/client.ts's requireEnv: fail loud with a clear message when
+// an env var is missing, instead of a bare `!` non-null assertion. Duplicated
+// (not imported) because client.ts is `server-only` and this helper runs in the
+// Next.js middleware/edge runtime.
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required env var: ${name}`);
+  return value;
+}
+
 // Refresh the auth session on every matched request. Follows the canonical
 // @supabase/ssr middleware pattern: build a response, mirror cookie writes onto
 // BOTH request and response, then call getUser() to trigger a refresh when the
@@ -20,8 +30,8 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
     {
       cookies: {
         getAll() {

@@ -9,7 +9,18 @@ import { HIRE_ROLES } from '@/lib/agent/schema';
 import { buybackRate } from '@/lib/buyback/rate';
 import { quadrantHourRollup } from '@/lib/buyback/rollups';
 import { DRIP_QUADRANTS } from '@/lib/buyback/types';
+import type { ValueTier } from '@/lib/buyback/types';
 import type { AuditWithItems, SopRow } from '@/lib/db/types';
+
+// Client-facing labels for the value-tier enum: the raw enum stores `$10000`,
+// but the export should read as polished as the UI (which shows `$10,000`).
+// Local const map keeps lib/export pure — no UI imports.
+const VALUE_TIER_LABEL: Record<ValueTier, string> = {
+  $10: '$10',
+  $100: '$100',
+  $1000: '$1,000',
+  $10000: '$10,000',
+};
 
 // A markdown table cell must not contain a raw pipe (it would split the row) or
 // a newline (it would break the table). Escape the pipe, flatten whitespace.
@@ -47,7 +58,7 @@ export function auditToMarkdown(audit: AuditWithItems, sops: SopRow[]): string {
   lines.push('| --- | ---: | ---: | --- | --- | --- |');
   for (const it of items) {
     lines.push(
-      `| ${cell(it.task)} | ${it.hoursPerWeek} | ${it.costToDelegate} | ${cell(it.valueTier)} | ${it.dripQuadrant} | ${it.recommendation} |`,
+      `| ${cell(it.task)} | ${it.hoursPerWeek} | ${it.costToDelegate} | ${cell(VALUE_TIER_LABEL[it.valueTier])} | ${it.dripQuadrant} | ${it.recommendation} |`,
     );
   }
   lines.push('');
@@ -73,7 +84,17 @@ export function auditToMarkdown(audit: AuditWithItems, sops: SopRow[]): string {
   // task it belongs to. content_md is already markdown (lib/sop-markdown), so it
   // goes in as-is. Rows with null content_md or an unknown item are skipped.
   const itemById = new Map(items.map((it) => [it.id, it]));
-  const embeddable = sops.filter((s) => s.content_md != null);
+  // Dedup by audit_item_id: a regenerated SOP produces multiple rows for one
+  // item, and only one belongs in the report. Keep the FIRST content-bearing
+  // row seen per item — mirrors app/app/audit/[id]/page.tsx, which relies on
+  // getSopsForAudit's newest-first ordering so "first seen" is the latest SOP.
+  const embeddable: SopRow[] = [];
+  const seenItems = new Set<string>();
+  for (const s of sops) {
+    if (s.content_md == null || seenItems.has(s.audit_item_id)) continue;
+    seenItems.add(s.audit_item_id);
+    embeddable.push(s);
+  }
   if (embeddable.length > 0) {
     lines.push('## Delegation SOPs', '');
     for (const sop of embeddable) {
