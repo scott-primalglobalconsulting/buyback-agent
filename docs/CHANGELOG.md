@@ -2,6 +2,85 @@
 
 ## Unreleased
 
+### Results dashboard — full-width bands, unified hire panel (2026-07-24)
+
+Layout rework of the results view so it reads as one designed page instead of
+assembled parts. Files: `components/BuybackRate.tsx`,
+`components/ReplacementLadder.tsx`, `components/AuditTable.tsx`,
+`components/TopTasks.tsx` (CSS only), `app/demo/page.tsx`,
+`app/app/audit/[id]/page.tsx`, `app/globals.css`,
+`docs/architecture/design-system.md`. No math, contract, or persistence change —
+every number still comes from `lib/buyback`.
+
+- **Full-width bands.** Dropped `.dash-grid`. "Offload these tasks" and "Your
+  first hire" were a two-column row pairing a 3-row list against a ladder plus an
+  essay; with `align-items: start` that left ~340px of dead space beside the
+  short column. Both are now their own full-width section, so the page is a
+  single column with one left and one right edge (verified: every band measures
+  `left=124 / right=1156` at 1280px).
+- **Hire panel unified.** `ReplacementLadder` rendered `.rungs` (a bordered card)
+  and `.rep-why` (a bare `h3` + `p` + mono blob, no container at all) as
+  siblings — the seam that made the block look bolted on. They are now one
+  `.hire-panel` card: rungs left, "`<Role>`, first." reasoning right, sharing a
+  border. Rungs use `flex: 1 0 auto` so they span the panel height instead of
+  packing to the bottom (`column-reverse` packs from the bottom edge).
+- **Reasoning as prose.** The agent's justification was 12.5px mono on an inset
+  fill, which read as a log dump. It is now body prose behind a "Why this rung"
+  label with a rule — it is the product's actual argument.
+- **Rung divider fix.** `.rung:first-child { border-top: none }` suppressed the
+  border on the DOM-first child (admin), which `column-reverse` renders at the
+  *bottom* — so the divider above the lit rung was missing and the line under the
+  panel's top edge was doubled. Now `:last-child`.
+- **Hero rebalanced.** The support stats sat in a `1fr 1fr` row beneath the
+  figure, leaving the right half of a ~1030px panel empty. Hero is now a split
+  panel: figure + definition left, stats + Buyback Rate callout in a divided
+  right column, vertically centred against the numeral.
+- **Offload rows align.** `.topitem` was a flex row, so at full width the chips
+  drifted with each task name's length. It is a grid now
+  (`22px 1fr 132px 108px 92px`), with a reflow under 680px.
+- **Dead revenue column collapses.** `AuditTable` hides the Revenue column when
+  no item carries `revenueProximity` (pre-0005 audits, cached demo) instead of
+  rendering ten "not scored" chips. Two tests cover both directions.
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (106), `npm run build`
+  all green. Verified live against `/demo` at 1280px dark, 1280px light, and
+  420px, plus box measurements for the band edges.
+
+### New-audit form — guided 3-step layout, inline help, alignment fixes (2026-07-24)
+
+Usability rework of `/app`'s new-audit form after a live test with a
+non-technical first-time user who could not tell what the form wanted. Files:
+`app/app/new-audit-form.tsx`, `app/globals.css` (`NEW-AUDIT FORM` block). No
+change to the API contract, `meta` shape, validation, or persistence — the same
+`items` + `AuditMetaSchema` payload goes out.
+
+- **Order.** Rebuilt as three numbered steps in the order a first-timer needs
+  them: **1 About your business → 2 Your week → 3 Run the analysis**. Business
+  context now leads instead of sitting between the task rows and the buttons.
+  The audit title moves out of the top slot into step 3, marked optional.
+- **Alignment.** `.af-row` was `1fr 120px 150px auto`; the header row's empty 4th
+  cell collapsed `auto` to zero, so the header's `1fr` was ~76px wider than the
+  body rows' and every column label sat right of its column. Final track is now
+  fixed (`minmax(0,1fr) 116px 124px 76px`), numeric headers are right-aligned to
+  the input's text edge (14px = 13px padding + 1px border), and the whole form
+  shares one 760px column so the task table and the context block finally have a
+  common right edge.
+- **Helpers.** Every step carries a plain-language intro line; the two confusing
+  numeric columns and all four context questions carry an inline `?` explainer
+  that opens on hover, keyboard focus, and tap (state + CSS, so it is not
+  hover-only). A live `N tasks · H hours a week` readout sits under the table.
+- **Examples de-emphasised.** Placeholder examples now render on the first row
+  only instead of repeating down the column, and `::placeholder` drops to 50%
+  opacity so ghost text no longer reads as entered data.
+- **Add task.** Moved out of the detached bottom action bar into a full-width
+  dashed control directly under the rows it appends to; `Load sample week`
+  becomes an inline "Not sure where to start?" link above the table.
+- **Mobile.** Each numeric input is wrapped in a label whose column name shows
+  only below 680px, where the header row is hidden — previously two bare number
+  boxes with no visible labels. Rows gain a hairline separator.
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (104), `npm run build`
+  all green. Layout verified by rendering the form markup against the built CSS
+  at 1200px and 420px, including the open-tooltip state.
+
 ### Report-quality Tier C + B — revenue-proximity, real Buyback Rate, SOP fit (2026-07-24)
 
 The strategic report-quality upgrade (review items #3, #6, #7, #4, #5), built on

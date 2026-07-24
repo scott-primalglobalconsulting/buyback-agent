@@ -45,6 +45,11 @@ type SseEvent =
 const DEFAULT_ERROR = 'Analysis failed. Please try again in a moment.';
 const BLANK_ROW: Row = { task: '', hours: '', cost: '' };
 
+// Running-total display: keep halves, drop a trailing ".0" so "12" beats "12.0".
+function formatHours(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
 async function messageOf(res: Response): Promise<string> {
   try {
     const body = (await res.json()) as { message?: unknown };
@@ -231,6 +236,14 @@ export function NewAuditForm({ workspaceId }: { workspaceId: string }) {
     }
   }
 
+  // Live orientation readout under the task table — the only feedback a
+  // first-timer gets that the rows are actually landing.
+  const filledCount = rows.filter((r) => r.task.trim() !== '').length;
+  const totalHours = rows.reduce((sum, r) => {
+    const h = Number(r.hours);
+    return sum + (Number.isFinite(h) && h > 0 ? h : 0);
+  }, 0);
+
   if (status === 'running' || status === 'saving') {
     return <RunningSkeleton phase={status} />;
   }
@@ -263,178 +276,335 @@ export function NewAuditForm({ workspaceId }: { workspaceId: string }) {
 
   return (
     <form onSubmit={onSubmit} className="audit-form">
-      <div className="af-title">
-        <label className="signin-label" htmlFor="audit-title">
-          Audit title
-        </label>
-        <input
-          id="audit-title"
-          className="signin-input"
-          placeholder={DEFAULT_AUDIT_TITLE}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
-
-      <div className="af-table" role="group" aria-label="Weekly tasks">
-        <div className="af-row af-head" aria-hidden="true">
-          <span>Task</span>
-          <span>Hours / wk</span>
-          <span>$ / hr to delegate</span>
-          <span />
+      {/* ---------------- STEP 1 — context first: it frames every later answer ---- */}
+      <section className="af-step">
+        <div className="af-step-head">
+          <span className="af-step-num" aria-hidden="true">
+            1
+          </span>
+          <div className="af-step-copy">
+            <h3>About your business</h3>
+            <p>
+              Four quick questions. They decide who we tell you to hire first and
+              what kind of help we recommend.
+            </p>
+          </div>
         </div>
-        {rows.map((row, i) => (
-          <div className="af-row" key={i}>
+
+        <fieldset className="af-step-body">
+          <legend className="sr-only">About your business</legend>
+
+          <div className="af-field">
+            <div className="af-label-row">
+              <span className="af-label" id="af-rev-label">
+                Are you at consistent revenue yet?
+              </span>
+              <Help id="help-rev">
+                Consistent means money comes in every month without you chasing
+                it. If income still swings a lot, pick Not yet — we will keep the
+                advice cheap and low risk.
+              </Help>
+            </div>
+            <div className="af-radios" role="radiogroup" aria-labelledby="af-rev-label">
+              <label>
+                <input
+                  type="radio"
+                  name="rev"
+                  checked={isAtRevenue === 'no'}
+                  onChange={() => setIsAtRevenue('no')}
+                />{' '}
+                Not yet
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="rev"
+                  checked={isAtRevenue === 'yes'}
+                  onChange={() => setIsAtRevenue('yes')}
+                />{' '}
+                Yes
+              </label>
+            </div>
+          </div>
+
+          <div className="af-field">
+            <div className="af-label-row">
+              <span className="af-label" id="af-team-label">
+                Do you have anyone helping you?
+              </span>
+              <Help id="help-team">
+                Anyone you can already hand work to counts — an assistant, a
+                contractor, a part timer. Solo means every task lands on you.
+              </Help>
+            </div>
+            <div className="af-radios" role="radiogroup" aria-labelledby="af-team-label">
+              <label>
+                <input
+                  type="radio"
+                  name="team"
+                  checked={team === 'solo'}
+                  onChange={() => setTeam('solo')}
+                />{' '}
+                Just me
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="team"
+                  checked={team === 'has-team'}
+                  onChange={() => setTeam('has-team')}
+                />{' '}
+                I have help
+              </label>
+            </div>
+          </div>
+
+          <div className="af-field">
+            <div className="af-label-row">
+              <span className="af-label" id="af-tools-label">
+                Can you spend money on software?
+              </span>
+              <Help id="help-tools">
+                If you would rather not add another monthly bill, pick free tools
+                only and we will stick to what you already have.
+              </Help>
+            </div>
+            <div className="af-radios" role="radiogroup" aria-labelledby="af-tools-label">
+              <label>
+                <input
+                  type="radio"
+                  name="tools"
+                  checked={toolBudget === 'none'}
+                  onChange={() => setToolBudget('none')}
+                />{' '}
+                Free tools only
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="tools"
+                  checked={toolBudget === 'some'}
+                  onChange={() => setToolBudget('some')}
+                />{' '}
+                Yes, some budget
+              </label>
+            </div>
+          </div>
+
+          <div className="af-field af-field-narrow">
+            <div className="af-label-row">
+              <label className="af-label" htmlFor="income">
+                Target annual income
+              </label>
+              <span className="af-optional">optional</span>
+              <Help id="help-income">
+                We use this to work out roughly what one hour of your time is
+                worth, which sets the bar for what is worth paying someone else
+                to do. Leave it blank if you would rather not say.
+              </Help>
+            </div>
+            <p className="af-hint">What you want the business to pay you in a year.</p>
             <input
-              className="signin-input af-task"
-              placeholder="e.g. Inbox triage & scheduling"
-              aria-label={`Task ${i + 1}`}
-              value={row.task}
-              onChange={(e) => updateRow(i, 'task', e.target.value)}
-            />
-            <input
-              className="signin-input af-num"
+              id="income"
+              className="signin-input"
               type="number"
               min="0"
-              step="0.5"
+              max="100000000"
+              step="1000"
               inputMode="decimal"
-              placeholder="0"
-              aria-label={`Hours per week for task ${i + 1}`}
-              value={row.hours}
-              onChange={(e) => updateRow(i, 'hours', e.target.value)}
+              placeholder="200000"
+              value={annualIncome}
+              onChange={(e) => setAnnualIncome(e.target.value)}
             />
+          </div>
+        </fieldset>
+      </section>
+
+      {/* ---------------- STEP 2 — the week itself ------------------------------ */}
+      <section className="af-step">
+        <div className="af-step-head">
+          <span className="af-step-num" aria-hidden="true">
+            2
+          </span>
+          <div className="af-step-copy">
+            <h3>Your week</h3>
+            <p>
+              List what you personally spent time on in a normal week. One line
+              per task. Five to ten lines is plenty, and rough guesses are fine.
+            </p>
+          </div>
+        </div>
+
+        <div className="af-step-body">
+          <p className="af-sample">
+            Not sure where to start?{' '}
+            <button type="button" className="af-linkbtn" onClick={loadSample}>
+              Fill in a sample week
+            </button>{' '}
+            and edit it.
+          </p>
+
+          <div className="af-table" role="group" aria-label="Weekly tasks">
+            <div className="af-row af-head">
+              <span className="af-h">What you did</span>
+              <span className="af-h af-h-num">
+                Hours / wk
+                <Help id="help-hours" align="right">
+                  Your best guess at how long it takes you in a normal week,
+                  added up. Half hours are fine.
+                </Help>
+              </span>
+              <span className="af-h af-h-num">
+                $ per hour
+                <Help id="help-cost" align="right">
+                  Roughly what you would expect to pay someone else per hour to
+                  take this off you. If you have no idea, leave it at 0 and we
+                  will still score the task.
+                </Help>
+              </span>
+              <span className="af-h" />
+            </div>
+            {rows.map((row, i) => (
+              <div className="af-row" key={i}>
+                <input
+                  className="signin-input af-task"
+                  placeholder={i === 0 ? 'Answering emails and booking calls' : ''}
+                  aria-label={`Task ${i + 1}`}
+                  value={row.task}
+                  onChange={(e) => updateRow(i, 'task', e.target.value)}
+                />
+                {/* The wrapping label carries a per-row column name that only
+                    shows on narrow screens, where the header row is hidden and
+                    two bare number boxes would otherwise be unlabelled. */}
+                <label className="af-cell">
+                  <span className="af-cell-label">Hours / wk</span>
+                  <input
+                    className="signin-input af-num"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    inputMode="decimal"
+                    placeholder={i === 0 ? '6' : ''}
+                    aria-label={`Hours per week for task ${i + 1}`}
+                    value={row.hours}
+                    onChange={(e) => updateRow(i, 'hours', e.target.value)}
+                  />
+                </label>
+                <label className="af-cell">
+                  <span className="af-cell-label">$ per hour</span>
+                  <input
+                    className="signin-input af-num"
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputMode="decimal"
+                    placeholder={i === 0 ? '25' : ''}
+                    aria-label={`Cost per hour to delegate task ${i + 1}`}
+                    value={row.cost}
+                    onChange={(e) => updateRow(i, 'cost', e.target.value)}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="af-remove"
+                  onClick={() => removeRow(i)}
+                  disabled={rows.length === 1}
+                  aria-label={`Remove task ${i + 1}`}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button type="button" className="af-add" onClick={addRow}>
+            + Add another task
+          </button>
+
+          <p className="af-total" role="status">
+            {filledCount === 0
+              ? 'No tasks yet.'
+              : `${filledCount} task${filledCount === 1 ? '' : 's'} · ${formatHours(totalHours)} hours a week`}
+          </p>
+        </div>
+      </section>
+
+      {/* ---------------- STEP 3 — name it and run ------------------------------ */}
+      <section className="af-step">
+        <div className="af-step-head">
+          <span className="af-step-num" aria-hidden="true">
+            3
+          </span>
+          <div className="af-step-copy">
+            <h3>Run the analysis</h3>
+            <p>Give it a name so you can find it later, then run it. Takes about a minute.</p>
+          </div>
+        </div>
+
+        <div className="af-step-body">
+          <div className="af-field af-field-narrow">
+            <div className="af-label-row">
+              <label className="af-label" htmlFor="audit-title">
+                Name this audit
+              </label>
+              <span className="af-optional">optional</span>
+            </div>
             <input
-              className="signin-input af-num"
-              type="number"
-              min="0"
-              step="1"
-              inputMode="decimal"
-              placeholder="0"
-              aria-label={`Cost per hour to delegate task ${i + 1}`}
-              value={row.cost}
-              onChange={(e) => updateRow(i, 'cost', e.target.value)}
+              id="audit-title"
+              className="signin-input"
+              placeholder={DEFAULT_AUDIT_TITLE}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
-            <button
-              type="button"
-              className="af-remove"
-              onClick={() => removeRow(i)}
-              disabled={rows.length === 1}
-              aria-label={`Remove task ${i + 1}`}
-            >
-              Remove
+          </div>
+
+          {validation ? <p className="signin-error">{validation}</p> : null}
+
+          <div className="af-actions">
+            <button type="submit" className="btn btn-primary">
+              Analyze my week
             </button>
           </div>
-        ))}
-      </div>
-
-      {validation ? <p className="signin-error">{validation}</p> : null}
-
-      <fieldset className="af-context">
-        <legend className="signin-label">About your business</legend>
-
-        <span className="signin-label" id="af-rev-label">
-          Are you at consistent revenue yet?
-        </span>
-        <div className="af-radios" role="radiogroup" aria-labelledby="af-rev-label">
-          <label>
-            <input
-              type="radio"
-              name="rev"
-              checked={isAtRevenue === 'no'}
-              onChange={() => setIsAtRevenue('no')}
-            />{' '}
-            Not yet
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="rev"
-              checked={isAtRevenue === 'yes'}
-              onChange={() => setIsAtRevenue('yes')}
-            />{' '}
-            Yes
-          </label>
         </div>
-
-        <label className="signin-label" htmlFor="income">
-          Your target annual income (optional)
-        </label>
-        <input
-          id="income"
-          className="signin-input"
-          type="number"
-          min="0"
-          max="100000000"
-          step="1000"
-          inputMode="decimal"
-          placeholder="e.g. 200000"
-          value={annualIncome}
-          onChange={(e) => setAnnualIncome(e.target.value)}
-        />
-
-        <span className="signin-label" id="af-team-label">
-          Team
-        </span>
-        <div className="af-radios" role="radiogroup" aria-labelledby="af-team-label">
-          <label>
-            <input
-              type="radio"
-              name="team"
-              checked={team === 'solo'}
-              onChange={() => setTeam('solo')}
-            />{' '}
-            Solo
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="team"
-              checked={team === 'has-team'}
-              onChange={() => setTeam('has-team')}
-            />{' '}
-            Have a team
-          </label>
-        </div>
-
-        <span className="signin-label" id="af-tools-label">
-          Paid tool budget
-        </span>
-        <div className="af-radios" role="radiogroup" aria-labelledby="af-tools-label">
-          <label>
-            <input
-              type="radio"
-              name="tools"
-              checked={toolBudget === 'none'}
-              onChange={() => setToolBudget('none')}
-            />{' '}
-            None / free tools
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="tools"
-              checked={toolBudget === 'some'}
-              onChange={() => setToolBudget('some')}
-            />{' '}
-            Some budget
-          </label>
-        </div>
-      </fieldset>
-
-      <div className="af-actions">
-        <div className="af-actions-left">
-          <button type="button" className="btn btn-ghost" onClick={addRow}>
-            Add task
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={loadSample}>
-            Load sample week
-          </button>
-        </div>
-        <button type="submit" className="btn btn-primary">
-          Analyze my week
-        </button>
-      </div>
+      </section>
     </form>
+  );
+}
+
+// Inline explainer. Opens on hover/keyboard focus (CSS) and on click (state), so
+// it works for a mouse, a keyboard, and a touch screen — a hover-only tooltip
+// would be invisible to half the people who need it most.
+function Help({
+  id,
+  align,
+  children,
+}: {
+  id: string;
+  align?: 'right';
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="af-help-wrap">
+      <button
+        type="button"
+        className="af-help"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label="What does this mean?"
+        onClick={() => setOpen((o) => !o)}
+      >
+        ?
+      </button>
+      <span
+        id={id}
+        role="tooltip"
+        className={`af-help-pop${align === 'right' ? ' af-help-right' : ''}`}
+        data-open={open ? 'true' : undefined}
+      >
+        {children}
+      </span>
+    </span>
   );
 }
 

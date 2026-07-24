@@ -135,4 +135,24 @@ describe('AuditTable', () => {
     // DRIP chip is direct-labeled, not color alone
     expect(html).toContain('>Delegate<');
   });
+
+  // The fixture carries no revenueProximity (pre-0005 audits and the cached demo
+  // result are the real cases). The column must collapse rather than render a
+  // full run of "not scored" chips.
+  it('omits the Revenue column when no item is scored for revenue', () => {
+    const html = renderToStaticMarkup(<AuditTable items={FIXTURE.items} />);
+    expect(html).not.toContain('>Revenue<');
+    expect(html).not.toContain('not scored');
+  });
+
+  it('renders the Revenue column when at least one item is scored', () => {
+    const items = FIXTURE.items.map((it, i) =>
+      i === 0 ? { ...it, revenueProximity: 'revenue-direct' as const } : it,
+    );
+    const html = renderToStaticMarkup(<AuditTable items={items} />);
+    expect(html).toContain('>Revenue<');
+    expect(html).toContain('revenue-direct');
+    // Unscored siblings still read honestly inside a column that exists.
+    expect(html).toContain('not scored');
+  });
 });

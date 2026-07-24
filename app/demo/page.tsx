@@ -251,25 +251,24 @@ function Dashboard({ result }: { result: AnalysisResult }) {
         <DripDashboard items={items} />
       </section>
 
-      <div className="dash-grid">
-        <section className="section">
-          <div className="section-head">
-            <span className="eyebrow">Shed first</span>
-            <h2>Offload these tasks</h2>
-          </div>
-          <TopTasks items={items} />
-        </section>
-        <section className="section">
-          <div className="section-head">
-            <span className="eyebrow">Replacement ladder</span>
-            <h2>Your first hire</h2>
-          </div>
-          <ReplacementLadder
-            firstHireRole={summary.firstHireRole}
-            justification={summary.firstHireJustification}
-          />
-        </section>
-      </div>
+      <section className="section">
+        <div className="section-head">
+          <span className="eyebrow">Shed first</span>
+          <h2>Offload these tasks</h2>
+        </div>
+        <TopTasks items={items} />
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <span className="eyebrow">Replacement ladder</span>
+          <h2>Your first hire</h2>
+        </div>
+        <ReplacementLadder
+          firstHireRole={summary.firstHireRole}
+          justification={summary.firstHireJustification}
+        />
+      </section>
 
       <section className="section">
         <div className="section-head">

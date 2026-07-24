@@ -1,6 +1,6 @@
 # Design System — Phase 5 UI
 
-Last updated: 2026-07-23 16:59 EST
+Last updated: 2026-07-24 17:30 EST
 
 The source of truth for the Buyback Agent product UI. Every Phase 5 component
 derives its color, type, and layout from this doc. Design-direction proof
@@ -99,18 +99,40 @@ Type scale (px): 11 · 13 · 15 (body) · 16 · 21 · 28 · 40 · 56 · hero cla
   with its hue and listing the tasks that landed there. Not a scatter with
   fabricated axes — the model stores a categorical quadrant per task, not
   coordinates.
-- **Buyback-rate hero** — the rate as the single display-face figure in cobalt,
-  with a plain-language definition and two support stats (reclaimable hrs/wk,
-  first hire). No arbitrary gauge.
+- **Buyback-rate hero** — the rate as the single display-face figure in cobalt
+  with a plain-language definition on the left, and the support stats
+  (reclaimable hrs/wk, first hire, and the $/hr Buyback Rate when income is
+  known) in a divided right column. No arbitrary gauge.
 - **Value ladder** — hours per value tier ($10 → $10,000) as sequential-ramp
   bars; the low tiers marked as the offload zone.
 - **Replacement Ladder** — the fixed hire order (admin → delivery → marketing →
   sales → leadership) as a vertical ladder; `summary.firstHireRole` lit in cobalt
-  with its justification, the rest dimmed.
+  with its justification, the rest dimmed. The rungs and the reasoning are ONE
+  panel (rungs left, reasoning right), never a card with loose text beneath it.
+  The justification renders as prose, not as a mono block — it is the product's
+  argument, not a log.
 - **Scored audit table** — task / hrs / $per-hr / value tier / DRIP chip
-  (dot + label) / keep-delegate-eliminate chip. Mono, tabular, column-aligned.
+  (dot + label) / revenue chip / keep-delegate-eliminate chip. Mono, tabular,
+  column-aligned. Optional columns collapse when no row has the data (the
+  revenue column is absent, not a run of "not scored" chips).
 
 All rollup math comes from `lib/buyback` — never recomputed in a component.
+
+## Dashboard page composition
+
+`/demo` and `/app/audit/[id]` render the SAME sequence, and it is a stack of
+full-width bands in one column — never a two-column dashboard row:
+
+1. Your reclaimable time (hero) → 2. Where your week goes (DRIP 2×2) →
+3. Offload these tasks → 4. Your first hire → 5. Every task, scored →
+6. Delegation SOPs (authed only).
+
+Every band spans the same measure so the page has one left edge and one right
+edge. Side-by-side sections are banned here: pairing blocks of unequal mass
+(a 3-row list against a ladder plus an essay) leaves a dead void beside the
+shorter one, which is what made the first cut read as pieced together. Where two
+things genuinely belong together, put them in one panel with an internal split
+(see the Replacement Ladder), not in two grid columns.
 
 ## State inventory
 
