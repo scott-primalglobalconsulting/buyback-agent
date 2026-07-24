@@ -1037,6 +1037,36 @@ body {
     justify-content: stretch;
   }
 }
+.af-context {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.af-context legend {
+  padding: 0 6px;
+}
+.af-context .signin-input {
+  max-width: 200px;
+}
+.af-radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 4px;
+}
+.af-radios label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
 
 /* ============================ AUDIT LIST ============================ */
 .audit-list {
