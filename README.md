@@ -8,7 +8,7 @@ An AI agent that audits a founder's week and tells them what to delegate, automa
 
 ## Try it
 
-**Live demo: coming soon** (deployed in the final phase; the link lands here).
+**Live demo: [buyback-agent.vercel.app](https://buyback-agent.vercel.app)**
 
 Fastest path, no signup: open **`/demo`**, and in about ten seconds you get a full scored audit of a realistic founder's week. Sign in with a magic link to analyze your own tasks, save audits, generate SOPs, and export the report.
 

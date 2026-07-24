@@ -40,6 +40,9 @@ import { SAMPLE_WEEK } from '@/lib/sample';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const runtime = 'nodejs';
+// compute_live awaits the full model response (~14-20s) before streaming; raise
+// the serverless timeout so a slow response or cold start does not get cut off.
+export const maxDuration = 60;
 
 type SseEvent =
   | { type: 'thinking'; text: string }

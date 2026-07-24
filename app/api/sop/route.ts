@@ -17,6 +17,9 @@ import { getSessionUserId } from '@/lib/db/session';
 // never reaches the client; only the validated Sop (or a generic error) is
 // returned.
 export const runtime = 'nodejs';
+// generateSOP is a non-streaming Anthropic call (~10-14s); raise the serverless
+// timeout so it does not hit the platform's short default (e.g. 10s on Hobby).
+export const maxDuration = 60;
 
 // Bound EVERY free-text field that flows into the prompt, not just context.
 // The domain ScoredItemSchema leaves task/rationale as unbounded min(1) strings;
