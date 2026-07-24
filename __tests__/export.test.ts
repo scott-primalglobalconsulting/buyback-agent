@@ -11,6 +11,10 @@ const AUDIT: AuditWithItems = {
   title: 'Q3 Founder Audit',
   first_hire_role: 'admin',
   first_hire_justification: 'Admin work eats the most low-value hours.',
+  is_at_revenue: null,
+  annual_income: null,
+  team: null,
+  tool_budget: null,
   created_at: '2026-07-23T00:00:00.000Z',
   items: [
     {

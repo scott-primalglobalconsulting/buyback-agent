@@ -8,7 +8,7 @@ import {
   type AnalysisSummary,
 } from '@/lib/agent/schema';
 import { createServerClient } from './client';
-import type { AuditItemRow, AuditRow, AuditItemWithId, AuditWithItems } from './types';
+import type { AuditItemRow, AuditRow, AuditItemWithId, AuditWithItems, AuditMeta } from './types';
 
 // Map a persisted audit_items row to the validated camelCase domain type.
 // The DB columns are NULLABLE (schema 0001) but ScoredItemSchema requires them
@@ -24,6 +24,7 @@ function rowToScoredItem(row: AuditItemRow): ScoredItem {
     dripQuadrant: row.drip_quadrant,
     recommendation: row.recommendation,
     rationale: row.rationale,
+    revenueProximity: row.revenue_proximity ?? undefined,
   });
 }
 
@@ -50,6 +51,7 @@ export async function createAudit(
   title: string,
   items: ScoredItem[],
   summary?: AnalysisSummary,
+  meta?: AuditMeta,
 ): Promise<AuditWithItems> {
   const supabase = await createServerClient();
   const {
@@ -64,6 +66,10 @@ export async function createAudit(
       created_by: user?.id ?? null,
       first_hire_role: summary?.firstHireRole ?? null,
       first_hire_justification: summary?.firstHireJustification ?? null,
+      is_at_revenue: meta?.isAtRevenue ?? null,
+      annual_income: meta?.annualIncome ?? null,
+      team: meta?.team ?? null,
+      tool_budget: meta?.toolBudget ?? null,
     })
     .select()
     .single();
@@ -81,6 +87,7 @@ export async function createAudit(
     drip_quadrant: item.dripQuadrant,
     recommendation: item.recommendation,
     rationale: item.rationale,
+    revenue_proximity: item.revenueProximity ?? null,
   }));
 
   const { data: insertedItems, error: itemsError } = await supabase
