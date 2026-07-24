@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Task 5.4 — Single-file markdown export (2026-07-23)
+
+- `lib/export.ts` `auditToMarkdown(audit, sops)` (PURE — imports only
+  `lib/buyback` + `HIRE_ROLES` + types; no React/Next/Supabase/Anthropic, no
+  clock): title + buyback percent + reclaimable/total hours, the DRIP
+  quadrant-hours rollup, the scored table, the Replacement Ladder (recommended
+  hire + justification, null-summary safe), and each SOP embedded under its task
+  heading (id-based `audit_item_id` -> item mapping). TDD: `__tests__/export.test.ts`
+  red-first (`Cannot find '@/lib/export'`) then green, 8 cases incl. null-summary.
+- `app/api/export/[id]/route.ts` (GET, nodejs): `getSessionUserId` null -> 401,
+  RLS-scoped `getAudit` null -> 404 (cross-tenant guard), `text/markdown`
+  attachment with a sanitized `[a-z0-9-]` filename (no header injection). Consumes
+  `lib/db` + `lib/export` only. Plus a "Download markdown" link on the detail page.
+- Suite 74 tests green; typecheck + lint clean. Review Approved (filename
+  injection, purity, id-based SOP mapping, 401-before-404 all verified). Deferred
+  polish: dedupe regenerated SOPs in the export to match the page's latest-per-item.
+
 ### Task 5.3 — Auth, persisted audits, SOP generation, teammate invite (2026-07-23)
 
 Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
