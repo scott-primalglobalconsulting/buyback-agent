@@ -1251,6 +1251,7 @@ body {
   display: inline-flex;
 }
 .af-help {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1266,6 +1267,18 @@ body {
   cursor: help;
   padding: 0;
   transition: color 120ms, border-color 120ms;
+}
+/* Grow the tap target to 44px without touching the 17px visual. Height is the
+   binding constraint; the width is kept modest (30px vs the 8px label-row gap)
+   so this box can never swallow a tap meant for the label beside it. */
+.af-help::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 .af-help:hover,
 .af-help[aria-expanded='true'] {
@@ -1452,8 +1465,70 @@ body {
     grid-column: 1 / -1;
     text-align: right;
   }
-  .af-help-pop {
-    width: min(264px, calc(100vw - 48px));
+  /* On a phone the help expands inline instead of floating. Two reasons: a
+     264px box hung off a button near the right edge overflowed a 320px viewport
+     by ~200px with nowhere to flip to, and an overlay that tall covered the
+     radios plus the entire next question. display:contents promotes the button
+     and the panel into .af-label-row's flex flow, so the panel takes a full row
+     of its own and pushes content down rather than hiding it. It must be
+     display:none when closed — visibility alone still reserves space in flow.
+     (The two column-header helps are unaffected: .af-head is hidden here.) */
+  .af-help-wrap {
+    display: contents;
+  }
+  .af-help-pop,
+  .af-help-right {
+    position: static;
+    flex-basis: 100%;
+    width: auto;
+    display: none;
+    box-shadow: none;
+  }
+  .af-help-wrap:focus-within .af-help-pop,
+  .af-help-pop[data-open='true'] {
+    display: block;
+  }
+}
+
+/* ============================ TOUCH TARGETS ============================ */
+/* Keyed to the input device, not the viewport: a tablet at 900px is still a
+   finger. 44px is the Apple/Google minimum. Desktop spacing is untouched. */
+@media (pointer: coarse) {
+  .af-help {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+  }
+  .af-label-row {
+    gap: 10px;
+  }
+  .af-radios {
+    gap: 4px 18px;
+  }
+  .af-radios label {
+    min-height: 44px;
+  }
+  .af-radios input[type='radio'] {
+    width: 20px;
+    height: 20px;
+  }
+  .af-remove,
+  .af-add,
+  .btn {
+    min-height: 44px;
+  }
+  /* Inline in a sentence, so the target grows by padding that the negative
+     margin cancels — the line box keeps its original height. */
+  .af-linkbtn {
+    display: inline-block;
+    padding: 12px 2px;
+    margin: -12px 0;
+  }
+  .brand,
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 }
 

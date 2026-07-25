@@ -584,8 +584,29 @@ function Help({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLSpanElement>(null);
+
+  // Touch has no hover, so a tapped-open popover otherwise has exactly one way
+  // out: hitting the same small button again. Close on any outside pointer or
+  // on Escape. Only listens while open.
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
   return (
-    <span className="af-help-wrap">
+    <span className="af-help-wrap" ref={wrapRef}>
       <button
         type="button"
         className="af-help"

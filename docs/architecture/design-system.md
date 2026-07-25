@@ -1,6 +1,6 @@
 # Design System — Phase 5 UI
 
-Last updated: 2026-07-24 17:30 EST
+Last updated: 2026-07-24 20:12 EST
 
 The source of truth for the Buyback Agent product UI. Every Phase 5 component
 derives its color, type, and layout from this doc. Design-direction proof
@@ -133,6 +133,23 @@ edge. Side-by-side sections are banned here: pairing blocks of unequal mass
 shorter one, which is what made the first cut read as pieced together. Where two
 things genuinely belong together, put them in one panel with an internal split
 (see the Replacement Ladder), not in two grid columns.
+
+## Touch
+
+- **44px minimum** on every interactive target, keyed to `@media (pointer:
+  coarse)` rather than a width breakpoint — a tablet at 900px is still a finger.
+- Grow the *hit area*, not the ornament, when the visual size is deliberate: the
+  17px `?` explainer keeps its size and gains a transparent 30×44 `::after`.
+  Keep that box narrower than the neighbouring gap so it cannot swallow a tap
+  meant for the label beside it.
+- **Floating layers expand inline on phones.** A popover anchored to a small
+  control near the right edge has nowhere to flip on a 320px viewport, and one
+  tall enough to matter covers the controls it is explaining. Below 680px the
+  help panel joins the label row's flex flow (`display: contents` on the wrapper,
+  `flex-basis: 100%` on the panel) and pushes content down. It must be
+  `display: none` when closed — `visibility: hidden` still reserves flow space.
+- Anything that opens on tap needs a way out that is not the same small button:
+  outside-pointer and Escape, since touch has no hover to fall back on.
 
 ## State inventory
 

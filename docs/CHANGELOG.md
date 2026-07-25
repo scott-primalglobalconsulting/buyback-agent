@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+### Mobile pass — touch targets, inline help, popover overflow (2026-07-24)
+
+Follow-up to the two UI reworks below, which were responsive but not optimized
+for touch. Files: `app/app/new-audit-form.tsx`, `app/globals.css`,
+`docs/architecture/design-system.md`. No layout change above 680px and no
+desktop behaviour change.
+
+- **44px touch targets**, keyed to `@media (pointer: coarse)` rather than a
+  width breakpoint (a tablet at 900px is still a finger). Measured before:
+  `.af-help` 17×17, radio inputs 13×13, `.af-linkbtn` 121×21, `.af-remove`
+  76×31, and on every page `.nav-link` 54×15. After, hit-tested at 375px:
+  `.af-help` responds 20px above/below centre, radio labels 71×44 live at both
+  edges, `.af-remove`/`.af-add` 327×44, `.af-linkbtn` 125×45, `.btn` 163×47.
+- **Hit area without visual change.** The `?` keeps its 22px dot and gains a
+  transparent 30×44 `::after`. Width is deliberately under the label-row gap so
+  it cannot swallow a tap meant for the adjacent label.
+- **Popover overflowed the viewport by up to 208px** at 320px — a 264px panel
+  hung off a button near the right edge with nowhere to flip. Below 680px the
+  help now expands inline: `display: contents` on the wrapper promotes the panel
+  into the label row's flex flow at `flex-basis: 100%`, so it pushes content down
+  instead of floating. It is `display: none` when closed, because
+  `visibility: hidden` still reserves space in flow. Above 680px it still floats
+  (verified `position: absolute`, 264px).
+- **Overlay hid the question it explained.** Before this, tapping `?` on
+  "consistent revenue" covered its own radios and the whole next field. Inline
+  expansion fixes it.
+- **Tooltip dismissal on touch.** Opened by tap, it could previously only be
+  closed by hitting the same small button again — touch has no hover. Added
+  outside-pointer and Escape handlers, bound only while open.
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (106), `npm run build`
+  all green. Swept 320/375/414/600/700/768/820/900px: zero page-level
+  horizontal overflow on both surfaces (the `.audit-table` bleed is inside
+  `.tbl-scroll`, which is intended).
+- **Not verified:** the outside-click/Escape dismissal is React behaviour on the
+  authed `/app` form, which needs a session; the static harness cannot exercise
+  it. Nothing has been on a real device or iOS Safari.
+
 ### Results dashboard — full-width bands, unified hire panel (2026-07-24)
 
 Layout rework of the results view so it reads as one designed page instead of
