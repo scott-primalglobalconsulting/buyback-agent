@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SignInForm } from './sign-in-form';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // Public sign-in surface (NOT under the /app gate). Server component so it can
 // await searchParams (Next 16: searchParams is a Promise) and hand any
@@ -18,7 +19,8 @@ export default async function SignInPage({
         <Link className="brand" href="/">
           Buyback Agent
         </Link>
-        <nav>
+        <nav className="app-nav">
+          <ThemeToggle />
           <Link className="nav-link" href="/demo">
             Try the demo
           </Link>

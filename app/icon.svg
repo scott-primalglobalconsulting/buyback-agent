@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Buyback Agent">
+  <!-- The DRIP allocation grid, which is the product's signature view. Top row
+       is Shed (Delegate, Replace) and reads lighter; bottom row is Keep (Invest,
+       Produce) and reads solid. The whole argument of the product in four
+       squares, and still legible at 16px. -->
+  <rect width="32" height="32" rx="7" fill="#111111"/>
+  <g fill="#EDEDEB">
+    <rect x="8"  y="8"  width="7" height="7" rx="1.5" opacity="0.42"/>
+    <rect x="17" y="8"  width="7" height="7" rx="1.5" opacity="0.42"/>
+    <rect x="8"  y="17" width="7" height="7" rx="1.5"/>
+    <rect x="17" y="17" width="7" height="7" rx="1.5"/>
+  </g>
+</svg>

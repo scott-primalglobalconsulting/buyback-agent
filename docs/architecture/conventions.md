@@ -53,5 +53,5 @@ results are asserted manually at the Phase 3 gate.
 - `npm run lint`, `npm run typecheck`, `npm test` all green.
 - Any migration touching RLS has a written cross-workspace isolation check
   in `docs/architecture/migrations.md`.
-- No claim of "green" without reading the actual command output
-  (superpowers:verification-before-completion).
+- No claim of "green" without reading the actual command output. Read it;
+  do not infer it from an exit code you did not see.

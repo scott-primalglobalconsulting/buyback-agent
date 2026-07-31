@@ -11,6 +11,11 @@ function cap(role: string) {
 // rung with the justification; the rest are dimmed. Rendered column-reversed so
 // admin (rung 01, hire first) sits at the bottom of the ladder.
 //
+// LAYOUT: the rungs and the reasoning are ONE panel (.hire-panel), rungs on the
+// left and the "<Role>, first." rationale on the right. They used to render as
+// siblings — a bordered card with a bare heading + paragraph loose underneath,
+// which read as two unrelated blocks stacked by accident.
+//
 // firstHireRole is nullable: persisted audits from before migration 0004 carry
 // no summary. When null, no rung is lit and the panel shows a "no recommendation
 // recorded" note instead of the highlighted hire, rather than crashing.
@@ -22,7 +27,7 @@ export function ReplacementLadder({
   justification: string;
 }) {
   return (
-    <div className="rep-wrap">
+    <div className="hire-panel">
       <ol className="rungs">
         {HIRE_ROLES.map((role, i) => {
           const on = role === firstHireRole;
@@ -46,7 +51,12 @@ export function ReplacementLadder({
           climb it only when the rung below is covered. The agent picks the
           earliest rung that unloads the most hours.
         </p>
-        {firstHireRole ? <div className="just">{justification}</div> : null}
+        {firstHireRole ? (
+          <div className="just">
+            <span className="just-label">Why this rung</span>
+            <p>{justification}</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Public landing. Server component — no client state. Styling comes entirely
 // from globals.css design-token classes (no inline styles). The non-affiliation
@@ -8,7 +9,8 @@ export default function Home() {
     <div className="page">
       <header className="site-head">
         <span className="brand">Buyback Agent</span>
-        <nav>
+        <nav className="app-nav">
+          <ThemeToggle />
           <Link className="nav-link" href="/app">
             Sign in
           </Link>

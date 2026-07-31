@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "validate:palette": "node scripts/validate-palette.mjs",
     "test:watch": "vitest",
     "eval": "tsx --env-file-if-exists=.env.local evals/run.ts"
   },

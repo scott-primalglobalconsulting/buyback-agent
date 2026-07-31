@@ -10,6 +10,7 @@ import { DripDashboard } from '@/components/DripDashboard';
 import { TopTasks } from '@/components/TopTasks';
 import { ReplacementLadder } from '@/components/ReplacementLadder';
 import { AuditTable } from '@/components/AuditTable';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // The anonymous demo. It POSTs to /api/analyze (the route ignores the body for
 // the demo path and analyzes the fixed SAMPLE_WEEK under the abuse guard), then
@@ -124,7 +125,8 @@ export default function DemoPage() {
         <Link className="brand" href="/">
           Buyback Agent
         </Link>
-        <nav>
+        <nav className="app-nav">
+          <ThemeToggle />
           <Link className="nav-link" href="/app">
             Sign in
           </Link>
@@ -251,25 +253,24 @@ function Dashboard({ result }: { result: AnalysisResult }) {
         <DripDashboard items={items} />
       </section>
 
-      <div className="dash-grid">
-        <section className="section">
-          <div className="section-head">
-            <span className="eyebrow">Shed first</span>
-            <h2>Offload these tasks</h2>
-          </div>
-          <TopTasks items={items} />
-        </section>
-        <section className="section">
-          <div className="section-head">
-            <span className="eyebrow">Replacement ladder</span>
-            <h2>Your first hire</h2>
-          </div>
-          <ReplacementLadder
-            firstHireRole={summary.firstHireRole}
-            justification={summary.firstHireJustification}
-          />
-        </section>
-      </div>
+      <section className="section">
+        <div className="section-head">
+          <span className="eyebrow">Shed first</span>
+          <h2>Offload these tasks</h2>
+        </div>
+        <TopTasks items={items} />
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <span className="eyebrow">Replacement ladder</span>
+          <h2>Your first hire</h2>
+        </div>
+        <ReplacementLadder
+          firstHireRole={summary.firstHireRole}
+          justification={summary.firstHireJustification}
+        />
+      </section>
 
       <section className="section">
         <div className="section-head">

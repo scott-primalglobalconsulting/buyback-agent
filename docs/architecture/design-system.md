@@ -1,10 +1,11 @@
 # Design System — Phase 5 UI
 
-Last updated: 2026-07-23 16:59 EST
+Last updated: 2026-07-31 13:24 -0500
 
 The source of truth for the Buyback Agent product UI. Every Phase 5 component
-derives its color, type, and layout from this doc. Design-direction proof
-(internal, private Artifact): `https://claude.ai/code/artifact/d855a59d-493a-469f-b27a-1f507eae68b9`.
+derives its color, type, and layout from this doc. Palette comparison and
+contrast evidence (internal, private Artifact):
+`https://claude.ai/code/artifact/82fcf60b-33d0-49c6-9101-d64b89d80531`.
 
 ## Principles
 
@@ -12,9 +13,15 @@ derives its color, type, and layout from this doc. Design-direction proof
   viz. No component-kit theme shipped untouched. Radix primitives are pulled in
   only where accessibility is hard (dialog, dropdown/menu, toast); Lucide for
   icons.
-- **Color means data.** The chrome is monochrome ink plus one cobalt accent. The
-  only categorical color in the product is the four DRIP quadrant hues. Cobalt
-  never labels a quadrant; status red is reserved for critical/error only.
+- **Color means data.** The chrome is achromatic — a true neutral grey with no
+  hue bias, and `--accent` is ink, not a brand color. The only color in the
+  product is the four DRIP quadrant hues plus the three status colors. Status
+  red is reserved for critical/error only.
+- **State it once.** A fact gets one visual treatment, not three. A washed cell
+  does not also need a colored border and a hue rail; a semantic chip does not
+  need a tinted fill behind a word that already says "eliminate". Callouts are
+  set with a hairline rule and a mono label, never a tinted box with an accent
+  bar down its left edge.
 - **Independent demo.** Nothing tracks Martell brand trade dress. The
   non-affiliation disclaimer stands on every public surface.
 - **Every state designed.** Streaming, loading, empty, and each guard verdict
@@ -29,36 +36,63 @@ both directions. Style components through the tokens, never hard-code a hex.
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `--paper` | `#FAF7F1` | `#131210` | Page ground (warm-biased neutral) |
-| `--panel` | `#FEFDFB` | `#1B1815` | Card / surface |
-| `--panel-2` | `#F2EEE6` | `#171410` | Recessed surface, table header |
-| `--inset` | `#ECE7DD` | `#221E18` | Track / well backgrounds |
-| `--line` | `#E6E0D5` | `#2B2620` | Hairline borders |
-| `--line-2` | `#D6CFC1` | `#39332A` | Stronger dividers |
-| `--ink` | `#1A1711` | `#EDEAE2` | Primary text |
-| `--ink-2` | `#615B4E` | `#A29B8D` | Secondary text |
-| `--ink-3` | `#8D887A` | `#746D60` | Faint labels / captions |
-| `--accent` | `#2F5FE0` | `#5B84F0` | Cobalt: interactive, section rules, hero figure, hire-first rung, focus |
-| `--accent-contrast` | `#FFFFFF` | `#0B1020` | Text/icon on accent fills |
+| `--paper` | `#F4F4F3` | `#0C0C0C` | Page ground (true neutral, no hue bias) |
+| `--panel` | `#FFFFFF` | `#171716` | Card / surface |
+| `--panel-2` | `#EBEBEA` | `#121211` | Recessed surface, table header, ladder ground |
+| `--inset` | `#E1E1E0` | `#1F1F1E` | Track / well backgrounds |
+| `--line` | `#DDDDDC` | `#2E2E2D` | Hairline borders |
+| `--line-2` | `#C0C0BF` | `#3E3E3D` | Stronger dividers, chip outlines |
+| `--ink` | `#111111` | `#EDEDEB` | Primary text |
+| `--ink-2` | `#545454` | `#A2A2A0` | Secondary text |
+| `--ink-3` | `#7C7C7C` | `#767674` | Faint labels / captions |
+| `--accent` | `#111111` | `#EDEDEB` | Ink: interactive, hero figure, hire-first rung, focus |
+| `--accent-contrast` | `#FFFFFF` | `#0C0C0C` | Text/icon on accent fills |
 
-Accent contrast verified AA on its ground (5.2:1 light, 4.9:1 dark). Focus ring
-uses `--accent`.
+**Why the accent is ink and not a hue.** Once the four quadrant colors are
+spaced far enough apart to survive red-green color vision deficiency they
+necessarily occupy blue (see below). Every chromatic accent then collides with
+one of them: a cobalt accent lands ~9 OKLab from Invest, jade ~9 from Delegate,
+copper ~8 from Replace. The only non-neutral accent that clears all four plus
+reserved red is magenta. Ink was chosen over magenta because it makes the
+quadrant hues the sole color on the page, which is what "color means data"
+actually requires.
+
+`--accent` is ink, so **any rule that needs to distinguish itself from body text
+cannot use it.** `.rchip.r--revenue-adjacent` uses `--drip-delegate` for exactly
+this reason.
 
 ### DRIP categorical (the data palette)
 
-Validated with the dataviz skill's `validate_palette.js` — both modes pass
-lightness-band, chroma floor, adjacent-pair CVD separation, and contrast/relief.
-The worst adjacent pair sits in the 6–8 CVD floor band, which is legal **only**
-with secondary encoding: the quadrant is always direct-labeled and spatially
-bucketed, and every chip pairs the color with a text label. Color is never the
-sole channel.
+Validated with `scripts/validate-palette.mjs` (WCAG contrast, OKLab
+lightness/chroma, and Viénot–Brettel–Mollon dichromat simulation on every pair).
+Both modes pass with no warnings:
+
+| Measure | Light | Dark | Floor |
+|---|---|---|---|
+| Closest quadrant pair, normal vision | 15.9 | 20.3 | 15 |
+| Same pair, deuteranopia / protanopia | 13.3 | 12.4 | 9 |
+| `--drip-delegate` as chip text on `--panel` | 4.55:1 | 7.67:1 | 4.5 |
+| Every other quadrant hue on `--panel` | ≥3.05:1 | ≥4.44:1 | 3.0 (graphical) |
+
+Color is still never the sole channel — the quadrant is direct-labeled and
+spatially bucketed, and every chip pairs the hue with a word.
 
 | Quadrant | Light | Dark | Meaning / action |
 |---|---|---|---|
-| Delegate | `#1FA8A0` | `#20A69D` | Low value, hand off to a person |
-| Replace | `#E0A419` | `#BC8218` | Repetitive, automate it away |
-| Invest | `#6E62E6` | `#7C6EEE` | High value, build a durable asset |
-| Produce | `#3E9E5A` | `#3E9C5C` | Founder's unique output, protect |
+| Delegate | `#0E7FA8` | `#3FB6E0` | Low value, hand off to a person |
+| Replace | `#C08A12` | `#E0A331` | Repetitive, automate it away |
+| Invest | `#5B2FBF` | `#8F63EF` | High value, build a durable asset |
+| Produce | `#17743E` | `#2E9455` | Founder's unique output, protect |
+
+Delegate is cyan-blue rather than teal on purpose. Under deuteranopia the
+surviving axis is blue↔yellow: teal and green both collapse toward it and become
+confusable, which is what the previous palette did (9.2 normal / 9.3 dichromat
+between Delegate and Produce). Pushing Delegate past the blue-green boundary and
+holding a lightness gap to Produce separates them in both.
+
+`--drip-delegate` is the one quadrant hue also rendered as text (`.rec.delegate`),
+so it alone carries the 4.5:1 small-text floor rather than the 3:1 graphical one.
+The previous teal failed this at 2.21:1.
 
 These map 1:1 to `DRIP_QUADRANTS` in `lib/buyback/types.ts` (`Delegate`,
 `Replace`, `Invest`, `Produce`). Fixed order, never cycled.
@@ -99,18 +133,57 @@ Type scale (px): 11 · 13 · 15 (body) · 16 · 21 · 28 · 40 · 56 · hero cla
   with its hue and listing the tasks that landed there. Not a scatter with
   fabricated axes — the model stores a categorical quadrant per task, not
   coordinates.
-- **Buyback-rate hero** — the rate as the single display-face figure in cobalt,
-  with a plain-language definition and two support stats (reclaimable hrs/wk,
-  first hire). No arbitrary gauge.
+- **Buyback-rate hero** — the rate as the single display-face figure in cobalt
+  with a plain-language definition on the left, and the support stats
+  (reclaimable hrs/wk, first hire, and the $/hr Buyback Rate when income is
+  known) in a divided right column. No arbitrary gauge.
 - **Value ladder** — hours per value tier ($10 → $10,000) as sequential-ramp
   bars; the low tiers marked as the offload zone.
 - **Replacement Ladder** — the fixed hire order (admin → delivery → marketing →
   sales → leadership) as a vertical ladder; `summary.firstHireRole` lit in cobalt
-  with its justification, the rest dimmed.
+  with its justification, the rest dimmed. The rungs and the reasoning are ONE
+  panel (rungs left, reasoning right), never a card with loose text beneath it.
+  The justification renders as prose, not as a mono block — it is the product's
+  argument, not a log.
 - **Scored audit table** — task / hrs / $per-hr / value tier / DRIP chip
-  (dot + label) / keep-delegate-eliminate chip. Mono, tabular, column-aligned.
+  (dot + label) / revenue chip / keep-delegate-eliminate chip. Mono, tabular,
+  column-aligned. Optional columns collapse when no row has the data (the
+  revenue column is absent, not a run of "not scored" chips).
 
 All rollup math comes from `lib/buyback` — never recomputed in a component.
+
+## Dashboard page composition
+
+`/demo` and `/app/audit/[id]` render the SAME sequence, and it is a stack of
+full-width bands in one column — never a two-column dashboard row:
+
+1. Your reclaimable time (hero) → 2. Where your week goes (DRIP 2×2) →
+3. Offload these tasks → 4. Your first hire → 5. Every task, scored →
+6. Delegation SOPs (authed only).
+
+Every band spans the same measure so the page has one left edge and one right
+edge. Side-by-side sections are banned here: pairing blocks of unequal mass
+(a 3-row list against a ladder plus an essay) leaves a dead void beside the
+shorter one, which is what made the first cut read as pieced together. Where two
+things genuinely belong together, put them in one panel with an internal split
+(see the Replacement Ladder), not in two grid columns.
+
+## Touch
+
+- **44px minimum** on every interactive target, keyed to `@media (pointer:
+  coarse)` rather than a width breakpoint — a tablet at 900px is still a finger.
+- Grow the *hit area*, not the ornament, when the visual size is deliberate: the
+  17px `?` explainer keeps its size and gains a transparent 30×44 `::after`.
+  Keep that box narrower than the neighbouring gap so it cannot swallow a tap
+  meant for the label beside it.
+- **Floating layers expand inline on phones.** A popover anchored to a small
+  control near the right edge has nowhere to flip on a 320px viewport, and one
+  tall enough to matter covers the controls it is explaining. Below 680px the
+  help panel joins the label row's flex flow (`display: contents` on the wrapper,
+  `flex-basis: 100%` on the panel) and pushes content down. It must be
+  `display: none` when closed — `visibility: hidden` still reserves flow space.
+- Anything that opens on tap needs a way out that is not the same small button:
+  outside-pointer and Escape, since touch has no hover to fall back on.
 
 ## State inventory
 

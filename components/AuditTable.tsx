@@ -26,6 +26,10 @@ export function AuditTable({
   hourlyRate?: number;
 }) {
   const showRate = hourlyRate != null && hourlyRate > 0;
+  // Drop the Revenue column entirely when nothing is scored (pre-0005 audits and
+  // the cached demo result). A column of ten "not scored" chips is dead weight
+  // that reads as a broken feature rather than an absent one.
+  const showRevenue = items.some((it) => it.revenueProximity != null);
   return (
     <div className="tbl-wrap">
       <div className="tbl-scroll">
@@ -37,7 +41,7 @@ export function AuditTable({
               <th className="num">$/hr</th>
               <th>Value tier</th>
               <th>DRIP</th>
-              <th>Revenue</th>
+              {showRevenue ? <th>Revenue</th> : null}
               <th>Call</th>
             </tr>
           </thead>
@@ -63,15 +67,17 @@ export function AuditTable({
                     {it.dripQuadrant}
                   </span>
                 </td>
-                <td>
-                  {it.revenueProximity ? (
-                    <span className={`rchip r--${it.revenueProximity}`}>
-                      {it.revenueProximity}
-                    </span>
-                  ) : (
-                    <span className="rchip r--unknown">not scored</span>
-                  )}
-                </td>
+                {showRevenue ? (
+                  <td>
+                    {it.revenueProximity ? (
+                      <span className={`rchip r--${it.revenueProximity}`}>
+                        {it.revenueProximity}
+                      </span>
+                    ) : (
+                      <span className="rchip r--unknown">not scored</span>
+                    )}
+                  </td>
+                ) : null}
                 <td>
                   <span className={`rec ${it.recommendation}`}>
                     {it.recommendation}

@@ -25,10 +25,30 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const SITE_URL = "https://buyback-agent.vercel.app";
+const DESCRIPTION =
+  "Score a week of work into DRIP quadrants, find where your hours leak, and name your first hire. Independent demo.";
+
+// metadataBase makes the file-convention images (app/opengraph-image.png,
+// app/icon.svg) resolve to absolute URLs. Without it Next emits relative ones,
+// which crawlers and link unfurlers cannot fetch.
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Buyback Agent",
-  description:
-    "Score a week of work into DRIP quadrants, find where your hours leak, and name your first hire. Independent demo.",
+  description: DESCRIPTION,
+  applicationName: "Buyback Agent",
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Buyback Agent",
+    title: "Buyback Agent",
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Buyback Agent",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
@@ -39,8 +59,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Applies a stored theme override before first paint. Without this the
+            page paints the OS theme and then snaps to the stored one — a visible
+            flash on every navigation. It runs synchronously and ahead of
+            hydration, which is why <html> carries suppressHydrationWarning. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('buyback:theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

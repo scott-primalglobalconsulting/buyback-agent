@@ -36,34 +36,41 @@ export function BuybackRate({
 
   return (
     <div className="rate-panel">
-      <span className="rate-label">Your reclaimable time</span>
-      <div className="rate-fig">
-        <span className="amt tnum">{pct}%</span>
-      </div>
-      <p className="rate-def">
-        The reclaimable share of your week. Hand off or automate everything below
-        your leverage and you buy that time back.
-      </p>
-      {hourly ? (
-        <p className="rate-buyback">
-          Your Buyback Rate is <b className="tnum">${hourly}/hr</b>. Delegate
-          anything whose work is worth less than that.
-        </p>
-      ) : null}
-      <div className="stat-2">
-        <div className="stat">
-          <div className="n tnum">
-            {reclaimable}
-            <small> of {total} hrs/wk</small>
+      <div className="rate-main">
+        {/* Left: the headline figure and what it means. */}
+        <div className="rate-lead">
+          <span className="rate-label">Your reclaimable time</span>
+          <div className="rate-fig">
+            <span className="amt tnum">{pct}%</span>
           </div>
-          <div className="k">Reclaimable now</div>
+          <p className="rate-def">
+            The reclaimable share of your week. Hand off or automate everything
+            below your leverage and you buy that time back.
+          </p>
         </div>
-        {firstHireRole ? (
+        {/* Right: the supporting stats, which used to sit in a half-empty row
+            under the figure and left the panel's right side dead. */}
+        <div className="rate-side">
           <div className="stat">
-            <div className="n">{cap(firstHireRole)}</div>
-            <div className="k">First hire</div>
+            <div className="n tnum">
+              {reclaimable}
+              <small> of {total} hrs/wk</small>
+            </div>
+            <div className="k">Reclaimable now</div>
           </div>
-        ) : null}
+          {firstHireRole ? (
+            <div className="stat">
+              <div className="n">{cap(firstHireRole)}</div>
+              <div className="k">First hire</div>
+            </div>
+          ) : null}
+          {hourly ? (
+            <p className="rate-buyback">
+              Your Buyback Rate is <b className="tnum">${hourly}/hr</b>. Delegate
+              anything whose work is worth less than that.
+            </p>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -2,12 +2,229 @@
 
 ## Unreleased
 
+### Brand marks — favicon and link-unfurl card (2026-07-31)
+
+The app was still serving the stock Next.js favicon, and had no OG image, so
+every shared link unfurled as a bare title.
+
+- **Icon is the DRIP 2x2**, the product's signature view: top row (Shed —
+  Delegate, Replace) rendered light, bottom row (Keep — Invest, Produce) solid.
+  The product's argument in four squares, still legible at 16px. Ships as
+  `app/icon.svg` for modern browsers and `app/favicon.ico` (16/32/48) for the
+  rest. The `.ico` went from 25,931 bytes of stock Next.js logo to 948 bytes.
+- **`app/opengraph-image.png`**, 1200x630, set in the real Instrument Serif and
+  IBM Plex rather than a substitute, with the four quadrant colours as a legend.
+- **Metadata completed** in `app/layout.tsx`: `metadataBase`, plus `openGraph`
+  and `twitter` blocks. Without `metadataBase` Next emits relative image URLs,
+  which no crawler or unfurler can fetch. Verified against a production build —
+  `og:image` resolves to `https://buyback-agent.vercel.app/opengraph-image.png`,
+  not the dev origin.
+
+### Repo hygiene — tooling names out, dangling references fixed (2026-07-31)
+
+Documentation and structure only; no code change. Prompted by a pre-review pass
+over what a first-time reader actually sees.
+
+- **Build tooling removed from the repo's vocabulary.** `docs/superpowers/`
+  became `docs/plans/` and `docs/specs/` (as renames, so history follows), and
+  the `> **For agentic workers:** REQUIRED SUB-SKILL: ...` preamble is gone from
+  both plans and the spec — it was the first line of the build plan. References
+  updated in `CLAUDE.md`, `docs/ARCHITECTURE.md`,
+  `docs/architecture/{conventions,migrations}.md` and this file.
+- **Three tracked docs pointed at a gitignored file.** `ARCHITECTURE.md` (twice)
+  and `migrations.md` sourced the cross-workspace isolation proof from
+  `.superpowers/sdd/rls-transcript.sql`, which is not in the repo — so the
+  evidence the README leans on could not be opened. The transcript is
+  self-contained and carries only hardcoded dummy UUIDs, so it now ships as
+  `supabase/tests/rls-isolation.sql` and the references resolve.
+- **`docs/architecture/file-map.md` rewritten against the real tree.** It had no
+  `components/` section, was missing migrations 0004 and 0005, and closed with
+  "Present as of Task 1.3 — everything under `lib/` is built in later phases" on
+  a shipped product. Every path in the new map was checked to exist.
+- **`CLAUDE.md`** dropped its `~/dev/_shared/` machine-local references, and the
+  Status section no longer claims "Phase 1 (scaffold + CI) complete".
+- **Local scratch can no longer be committed by accident.** `.claude/` and
+  `private/` are gitignored and `.claude/settings.json` is untracked; the
+  session-handoff artifacts that were sitting untracked-but-unignored in `docs/`
+  and `.claude/` are out of the working tree.
+- **History audited, nothing to remove.** All 102 paths ever committed across
+  every branch are still tracked (nothing was committed then deleted), and all
+  255 historical blobs were scanned for `sk-ant-` keys, JWTs, Supabase project
+  URLs, AWS keys and PEM private keys. The only matches are the literal string
+  `service_role` in SQL prose about the Postgres role. No credential has been in
+  this repository at any point.
+
+### Graphite palette, ornament removal, theme toggle (2026-07-31)
+
+Colour and chrome only. No component structure, business logic, contract,
+schema, persistence, or rollup-math change. Files: `app/globals.css`,
+`app/layout.tsx`, `components/ThemeToggle.tsx` (new),
+`scripts/validate-palette.mjs` (new), the four page headers,
+`docs/architecture/design-system.md`, `.github/workflows/ci.yml`,
+`package.json`, `CLAUDE.md`. Lint, typecheck, 106 tests, build and the new
+palette gate all green.
+
+- **Two accessibility defects found and fixed.** `.rec.delegate` rendered the
+  old teal as 10.5px text at **2.21:1** on `--panel`, a WCAG AA failure that was
+  live. Separately, Delegate and Produce sat **9.2** apart perceptually and
+  **9.3** apart under simulated deuteranopia — inside the band this doc already
+  flagged as risky. Now 15.9 / 13.3 (light) and 20.3 / 12.4 (dark).
+- **New palette: Graphite.** Achromatic chrome, `--accent` is ink. The warm sand
+  ground is gone from both themes. Token names, count and semantics unchanged,
+  so no component was touched to apply it.
+- **Why the accent is not a hue.** Spacing the four quadrant colours far enough
+  apart to survive red-green CVD forces them to occupy blue; every chromatic
+  accent then collides with one (cobalt ~9 from Invest, jade ~9 from Delegate,
+  copper ~8 from Replace). Magenta was the only clear chromatic option. Ink was
+  chosen so the quadrant hues are the only colour on the page.
+- **`.rchip.r--revenue-adjacent` remapped** from `--accent` to
+  `--drip-delegate`. With an ink accent it would have been indistinguishable
+  from an untagged chip. This is the only rule whose meaning changed.
+- **Ornament removed.** The 3px accent rails on `.rate-buyback`, `.rev-caution`,
+  `.rep-why .just`, `.qcell` and `.rung.on` are gone; those callouts are now set
+  with a hairline rule and a mono label. Semantic chips (`.rec`, `.rchip`,
+  `.state-badge`) dropped their tinted fills and 100px pill radius for an
+  outline. Quadrant cells kept the wash and lost the duplicate tinted border.
+  Dashed borders on `.af-add` and `.audit-empty` went solid. The skeleton's
+  sweeping gradient became an opacity breath.
+- **`.btn-primary:hover` was a no-op in light mode** — it mixed `--accent`
+  toward `#000`, and `--accent` is now near-black. Mixes toward `--paper`
+  instead, so it lightens on light and darkens on dark.
+- **Theme toggle** in every header, overriding the OS preference in both
+  directions. State lives on `<html data-theme>` and is read via
+  `useSyncExternalStore`, not copied into React state in an effect, so an OS
+  theme change or a second tab both propagate. A pre-paint inline script in
+  `app/layout.tsx` applies the stored choice before first paint (hence
+  `suppressHydrationWarning` on `<html>`). Storage key is namespaced
+  `buyback:theme` — a bare `theme` collides with anything else on the origin.
+- **`npm run validate:palette`, now a CI gate.** Parses the shipped tokens out
+  of `app/globals.css` rather than a copy, so the numbers in the design doc
+  cannot drift. Checks contrast floors, quadrant separation under
+  Viénot–Brettel–Mollon dichromat simulation, accent-vs-quadrant distance,
+  surface stepping, ramp monotonicity, and that all four theme blocks agree.
+
+### Mobile pass — touch targets, inline help, popover overflow (2026-07-24)
+
+Follow-up to the two UI reworks below, which were responsive but not optimized
+for touch. Files: `app/app/new-audit-form.tsx`, `app/globals.css`,
+`docs/architecture/design-system.md`. No layout change above 680px and no
+desktop behaviour change.
+
+- **44px touch targets**, keyed to `@media (pointer: coarse)` rather than a
+  width breakpoint (a tablet at 900px is still a finger). Measured before:
+  `.af-help` 17×17, radio inputs 13×13, `.af-linkbtn` 121×21, `.af-remove`
+  76×31, and on every page `.nav-link` 54×15. After, hit-tested at 375px:
+  `.af-help` responds 20px above/below centre, radio labels 71×44 live at both
+  edges, `.af-remove`/`.af-add` 327×44, `.af-linkbtn` 125×45, `.btn` 163×47.
+- **Hit area without visual change.** The `?` keeps its 22px dot and gains a
+  transparent 30×44 `::after`. Width is deliberately under the label-row gap so
+  it cannot swallow a tap meant for the adjacent label.
+- **Popover overflowed the viewport by up to 208px** at 320px — a 264px panel
+  hung off a button near the right edge with nowhere to flip. Below 680px the
+  help now expands inline: `display: contents` on the wrapper promotes the panel
+  into the label row's flex flow at `flex-basis: 100%`, so it pushes content down
+  instead of floating. It is `display: none` when closed, because
+  `visibility: hidden` still reserves space in flow. Above 680px it still floats
+  (verified `position: absolute`, 264px).
+- **Overlay hid the question it explained.** Before this, tapping `?` on
+  "consistent revenue" covered its own radios and the whole next field. Inline
+  expansion fixes it.
+- **Tooltip dismissal on touch.** Opened by tap, it could previously only be
+  closed by hitting the same small button again — touch has no hover. Added
+  outside-pointer and Escape handlers, bound only while open.
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (106), `npm run build`
+  all green. Swept 320/375/414/600/700/768/820/900px: zero page-level
+  horizontal overflow on both surfaces (the `.audit-table` bleed is inside
+  `.tbl-scroll`, which is intended).
+- **Not verified:** the outside-click/Escape dismissal is React behaviour on the
+  authed `/app` form, which needs a session; the static harness cannot exercise
+  it. Nothing has been on a real device or iOS Safari.
+
+### Results dashboard — full-width bands, unified hire panel (2026-07-24)
+
+Layout rework of the results view so it reads as one designed page instead of
+assembled parts. Files: `components/BuybackRate.tsx`,
+`components/ReplacementLadder.tsx`, `components/AuditTable.tsx`,
+`components/TopTasks.tsx` (CSS only), `app/demo/page.tsx`,
+`app/app/audit/[id]/page.tsx`, `app/globals.css`,
+`docs/architecture/design-system.md`. No math, contract, or persistence change —
+every number still comes from `lib/buyback`.
+
+- **Full-width bands.** Dropped `.dash-grid`. "Offload these tasks" and "Your
+  first hire" were a two-column row pairing a 3-row list against a ladder plus an
+  essay; with `align-items: start` that left ~340px of dead space beside the
+  short column. Both are now their own full-width section, so the page is a
+  single column with one left and one right edge (verified: every band measures
+  `left=124 / right=1156` at 1280px).
+- **Hire panel unified.** `ReplacementLadder` rendered `.rungs` (a bordered card)
+  and `.rep-why` (a bare `h3` + `p` + mono blob, no container at all) as
+  siblings — the seam that made the block look bolted on. They are now one
+  `.hire-panel` card: rungs left, "`<Role>`, first." reasoning right, sharing a
+  border. Rungs use `flex: 1 0 auto` so they span the panel height instead of
+  packing to the bottom (`column-reverse` packs from the bottom edge).
+- **Reasoning as prose.** The agent's justification was 12.5px mono on an inset
+  fill, which read as a log dump. It is now body prose behind a "Why this rung"
+  label with a rule — it is the product's actual argument.
+- **Rung divider fix.** `.rung:first-child { border-top: none }` suppressed the
+  border on the DOM-first child (admin), which `column-reverse` renders at the
+  *bottom* — so the divider above the lit rung was missing and the line under the
+  panel's top edge was doubled. Now `:last-child`.
+- **Hero rebalanced.** The support stats sat in a `1fr 1fr` row beneath the
+  figure, leaving the right half of a ~1030px panel empty. Hero is now a split
+  panel: figure + definition left, stats + Buyback Rate callout in a divided
+  right column, vertically centred against the numeral.
+- **Offload rows align.** `.topitem` was a flex row, so at full width the chips
+  drifted with each task name's length. It is a grid now
+  (`22px 1fr 132px 108px 92px`), with a reflow under 680px.
+- **Dead revenue column collapses.** `AuditTable` hides the Revenue column when
+  no item carries `revenueProximity` (pre-0005 audits, cached demo) instead of
+  rendering ten "not scored" chips. Two tests cover both directions.
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (106), `npm run build`
+  all green. Verified live against `/demo` at 1280px dark, 1280px light, and
+  420px, plus box measurements for the band edges.
+
+### New-audit form — guided 3-step layout, inline help, alignment fixes (2026-07-24)
+
+Usability rework of `/app`'s new-audit form after a live test with a
+non-technical first-time user who could not tell what the form wanted. Files:
+`app/app/new-audit-form.tsx`, `app/globals.css` (`NEW-AUDIT FORM` block). No
+change to the API contract, `meta` shape, validation, or persistence — the same
+`items` + `AuditMetaSchema` payload goes out.
+
+- **Order.** Rebuilt as three numbered steps in the order a first-timer needs
+  them: **1 About your business → 2 Your week → 3 Run the analysis**. Business
+  context now leads instead of sitting between the task rows and the buttons.
+  The audit title moves out of the top slot into step 3, marked optional.
+- **Alignment.** `.af-row` was `1fr 120px 150px auto`; the header row's empty 4th
+  cell collapsed `auto` to zero, so the header's `1fr` was ~76px wider than the
+  body rows' and every column label sat right of its column. Final track is now
+  fixed (`minmax(0,1fr) 116px 124px 76px`), numeric headers are right-aligned to
+  the input's text edge (14px = 13px padding + 1px border), and the whole form
+  shares one 760px column so the task table and the context block finally have a
+  common right edge.
+- **Helpers.** Every step carries a plain-language intro line; the two confusing
+  numeric columns and all four context questions carry an inline `?` explainer
+  that opens on hover, keyboard focus, and tap (state + CSS, so it is not
+  hover-only). A live `N tasks · H hours a week` readout sits under the table.
+- **Examples de-emphasised.** Placeholder examples now render on the first row
+  only instead of repeating down the column, and `::placeholder` drops to 50%
+  opacity so ghost text no longer reads as entered data.
+- **Add task.** Moved out of the detached bottom action bar into a full-width
+  dashed control directly under the rows it appends to; `Load sample week`
+  becomes an inline "Not sure where to start?" link above the table.
+- **Mobile.** Each numeric input is wrapped in a label whose column name shows
+  only below 680px, where the header row is hidden — previously two bare number
+  boxes with no visible labels. Rows gain a hairline separator.
+- Gate: `npm run lint`, `npm run typecheck`, `npm test` (104), `npm run build`
+  all green. Layout verified by rendering the form markup against the built CSS
+  at 1200px and 420px, including the open-tooltip state.
+
 ### Report-quality Tier C + B — revenue-proximity, real Buyback Rate, SOP fit (2026-07-24)
 
 The strategic report-quality upgrade (review items #3, #6, #7, #4, #5), built on
 branch `tier-c-report-quality` via the SDD cadence (implementer + adversarial
 reviewer per task on Opus 4.8) with a final whole-branch review. Plan:
-`docs/superpowers/plans/2026-07-24-report-quality-tier-c.md`. Commits `df00d74`
+`docs/plans/2026-07-24-report-quality-tier-c.md`. Commits `df00d74`
 (C1) through `24cb497` (fix wave).
 
 - **#3 Revenue-proximity dimension.** Each task is scored `revenue-direct |
@@ -318,7 +535,7 @@ Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
 - Added `docs/ARCHITECTURE.md`: membership-keyed RLS model, security-definer
   rationale, policy summary, and the cross-workspace isolation transcript
   (captured live-DB output pending — controller runs it as Gate 4 evidence).
-- Added `.superpowers/sdd/rls-transcript.sql` (gitignored; mirrored verbatim
+- Added `supabase/tests/rls-isolation.sql` (mirrored verbatim
   into `docs/ARCHITECTURE.md`): adversarial, self-contained, rolled-back
   transcript proving userA cannot read workspace B's audit while in-workspace
   rows stay visible.
@@ -368,7 +585,7 @@ Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
   `SUPABASE_SERVICE_ROLE_KEY`, `SERVER_SALT`.
 - Fixed `.gitignore`: narrowed the blanket `.env*` rule to `.env*.local` so
   `.env.example` stays tracked; added `SESSION.md`, `NOTES.md`,
-  `.superpowers/` (controller scratch, never committed).
+  the local build-controller scratch directory (never committed).
 - Added `.claude/settings.json` (committed project meta: deployTier A, saas
   stack). `.claude/settings.local.json` remains session-local and untracked.
 - Added `CLAUDE.md` and `docs/architecture/{file-map,conventions,local-dev,

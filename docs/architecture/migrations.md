@@ -26,7 +26,7 @@ DB holds live data._
 
 The concrete isolation check for `0002_rls.sql` lives in
 [`../ARCHITECTURE.md`](../ARCHITECTURE.md#cross-workspace-isolation-check):
-the transcript SQL (source: `.superpowers/sdd/rls-transcript.sql`) plus the
+the transcript SQL (source: `supabase/tests/rls-isolation.sql`) plus the
 captured live-DB output demonstrating that a user in workspace A cannot read a
 row owned by workspace B while in-workspace rows remain visible. This is a
 Phase 4 gate requirement, not optional documentation.

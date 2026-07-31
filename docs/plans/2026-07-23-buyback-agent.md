@@ -2,8 +2,6 @@
 
 Last updated: 2026-07-23 12:15 EST
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Every phase ends at a **verification gate** — run the stated command, read the output, confirm green (superpowers:verification-before-completion), then STOP for operator review before starting the next phase.
-
 **Goal:** Ship a deployed, credible AI micro-SaaS that operationalizes Dan Martell's Buyback Loop (Audit → Transfer → Fill): a founder enters their week's tasks, an engineered LLM agent scores each into DRIP quadrants + value tiers + keep/delegate/eliminate, computes a buyback rate, recommends the first hire, and generates delegation SOPs — all exportable, multi-tenant, and covered by tests + evals + CI.
 
 **Architecture:** Next.js 16 App Router + TypeScript strict. Three hard-isolated library boundaries: `lib/agent` (Anthropic calls, Zod-validated structured tool-use, zero React/Next/Supabase imports), `lib/buyback` (pure domain math, zero I/O), `lib/db` (the only place that touches Supabase; RLS-enforced). Routes/components consume these and never call Anthropic or Supabase directly. Runtime LLM is `claude-sonnet-5` with adaptive thinking; the analyze step streams. Deployed on Vercel with Supabase Postgres/Auth/RLS.
