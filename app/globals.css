@@ -9,25 +9,30 @@
    over the OS preference in both directions.
    ============================================================ */
 
-/* Graphite. The chrome is achromatic on purpose — the four DRIP hues and the
-   three status colors are the only color in the product, so hue always means
-   data. --accent is ink, not a brand hue: with the quadrant palette spaced far
-   enough apart to survive red-green CVD it necessarily occupies blue, and any
-   cobalt accent lands ~9 OKLab from Invest (the collision the previous palette
+/* Slate. The chrome is a cool blue-grey — every neutral carries its blue
+   channel HIGHEST, so nothing can read warm. This replaced an earlier "Graphite"
+   set that was described as achromatic but shipped with blue 1-2 points LOW on
+   9 of 10 dark neutrals; --ink paints the display headline and every light
+   element, so that bias read as cream across a whole page. scripts/
+   validate-palette.mjs now fails the build on any warm neutral.
+
+   --accent is ink, not a brand hue: with the quadrant palette spaced far enough
+   apart to survive red-green CVD it necessarily occupies blue, and any cobalt
+   accent lands ~9 OKLab from Invest (the collision the original palette
    shipped). Validated: worst quadrant pair 15.9 normal / 13.3 dichromat, every
    text token AA on its own ground. See docs/architecture/design-system.md. */
 :root {
   color-scheme: light dark;
 
-  --paper: #f4f4f3;
+  --paper: #f3f5f8;
   --panel: #ffffff;
-  --panel-2: #ebebea;
-  --inset: #e1e1e0;
-  --line: #dddddc;
-  --line-2: #c0c0bf;
-  --ink: #111111;
-  --ink-2: #545454;
-  --ink-3: #7c7c7c;
+  --panel-2: #e9edf3;
+  --inset: #dfe4ec;
+  --line: #dbe0e8;
+  --line-2: #bcc5d2;
+  --ink: #0e1621;
+  --ink-2: #4a5666;
+  --ink-3: #778397;
 
   --drip-delegate: #0e7fa8;
   --drip-replace: #c08a12;
@@ -38,18 +43,18 @@
   --warn: #9a6608;
   --crit: #be3a2b;
 
-  --accent: #111111;
+  --accent: #0e1621;
   --accent-contrast: #ffffff;
 
   /* sequential ink ramp (single-measure magnitude, one hue) */
-  --seq-1: #e5e5e4;
-  --seq-2: #c0c0bf;
-  --seq-3: #8c8c8b;
-  --seq-4: #535352;
-  --seq-5: #1e1e1d;
+  --seq-1: #e3e7ee;
+  --seq-2: #bec5d0;
+  --seq-3: #8a93a2;
+  --seq-4: #4b5565;
+  --seq-5: #1a212b;
 
-  --focus: #111111;
-  --shadow: 0 1px 2px rgba(17, 17, 17, 0.05), 0 8px 24px -12px rgba(17, 17, 17, 0.16);
+  --focus: #0e1621;
+  --shadow: 0 1px 2px rgba(14, 22, 33, 0.06), 0 8px 24px -12px rgba(14, 22, 33, 0.18);
   --r: 4px;
   --r-lg: 8px;
   --maxw: 1080px;
@@ -62,15 +67,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #0c0c0c;
-    --panel: #171716;
-    --panel-2: #121211;
-    --inset: #1f1f1e;
-    --line: #2e2e2d;
-    --line-2: #3e3e3d;
-    --ink: #ededeb;
-    --ink-2: #a2a2a0;
-    --ink-3: #767674;
+    --paper: #080b10;
+    --panel: #11161f;
+    --panel-2: #0d121a;
+    --inset: #181f2a;
+    --line: #262f3b;
+    --line-2: #33404f;
+    --ink: #e6edf5;
+    --ink-2: #97a3b2;
+    --ink-3: #6c7786;
     --drip-delegate: #3fb6e0;
     --drip-replace: #e0a331;
     --drip-invest: #8f63ef;
@@ -78,28 +83,28 @@
     --good: #46b96b;
     --warn: #d69a24;
     --crit: #e0705e;
-    --accent: #ededeb;
-    --accent-contrast: #0c0c0c;
-    --seq-1: #1f1f1e;
-    --seq-2: #3b3b3a;
-    --seq-3: #616160;
-    --seq-4: #92928f;
-    --seq-5: #cbcbc8;
-    --focus: #ededeb;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.32), 0 12px 30px -16px rgba(0, 0, 0, 0.72);
+    --accent: #e6edf5;
+    --accent-contrast: #080b10;
+    --seq-1: #181f2a;
+    --seq-2: #2d3745;
+    --seq-3: #586373;
+    --seq-4: #8893a2;
+    --seq-5: #c2cad4;
+    --focus: #e6edf5;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.34), 0 12px 30px -16px rgba(0, 0, 0, 0.74);
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #0c0c0c;
-  --panel: #171716;
-  --panel-2: #121211;
-  --inset: #1f1f1e;
-  --line: #2e2e2d;
-  --line-2: #3e3e3d;
-  --ink: #ededeb;
-  --ink-2: #a2a2a0;
-  --ink-3: #767674;
+  --paper: #080b10;
+  --panel: #11161f;
+  --panel-2: #0d121a;
+  --inset: #181f2a;
+  --line: #262f3b;
+  --line-2: #33404f;
+  --ink: #e6edf5;
+  --ink-2: #97a3b2;
+  --ink-3: #6c7786;
   --drip-delegate: #3fb6e0;
   --drip-replace: #e0a331;
   --drip-invest: #8f63ef;
@@ -107,27 +112,27 @@
   --good: #46b96b;
   --warn: #d69a24;
   --crit: #e0705e;
-  --accent: #ededeb;
-  --accent-contrast: #0c0c0c;
-  --seq-1: #1f1f1e;
-  --seq-2: #3b3b3a;
-  --seq-3: #616160;
-  --seq-4: #92928f;
-  --seq-5: #cbcbc8;
-  --focus: #ededeb;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.32), 0 12px 30px -16px rgba(0, 0, 0, 0.72);
+  --accent: #e6edf5;
+  --accent-contrast: #080b10;
+  --seq-1: #181f2a;
+  --seq-2: #2d3745;
+  --seq-3: #586373;
+  --seq-4: #8893a2;
+  --seq-5: #c2cad4;
+  --focus: #e6edf5;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.34), 0 12px 30px -16px rgba(0, 0, 0, 0.74);
 }
 
 :root[data-theme="light"] {
-  --paper: #f4f4f3;
+  --paper: #f3f5f8;
   --panel: #ffffff;
-  --panel-2: #ebebea;
-  --inset: #e1e1e0;
-  --line: #dddddc;
-  --line-2: #c0c0bf;
-  --ink: #111111;
-  --ink-2: #545454;
-  --ink-3: #7c7c7c;
+  --panel-2: #e9edf3;
+  --inset: #dfe4ec;
+  --line: #dbe0e8;
+  --line-2: #bcc5d2;
+  --ink: #0e1621;
+  --ink-2: #4a5666;
+  --ink-3: #778397;
   --drip-delegate: #0e7fa8;
   --drip-replace: #c08a12;
   --drip-invest: #5b2fbf;
@@ -135,15 +140,15 @@
   --good: #15803d;
   --warn: #9a6608;
   --crit: #be3a2b;
-  --accent: #111111;
+  --accent: #0e1621;
   --accent-contrast: #ffffff;
-  --seq-1: #e5e5e4;
-  --seq-2: #c0c0bf;
-  --seq-3: #8c8c8b;
-  --seq-4: #535352;
-  --seq-5: #1e1e1d;
-  --focus: #111111;
-  --shadow: 0 1px 2px rgba(17, 17, 17, 0.05), 0 8px 24px -12px rgba(17, 17, 17, 0.16);
+  --seq-1: #e3e7ee;
+  --seq-2: #bec5d0;
+  --seq-3: #8a93a2;
+  --seq-4: #4b5565;
+  --seq-5: #1a212b;
+  --focus: #0e1621;
+  --shadow: 0 1px 2px rgba(14, 22, 33, 0.06), 0 8px 24px -12px rgba(14, 22, 33, 0.18);
 }
 
 /* ============================ BASE ============================ */

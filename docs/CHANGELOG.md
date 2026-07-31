@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+### Slate palette, warm-neutral gate, auth email (2026-07-31)
+
+**The previous palette shipped a bug.** It was documented as achromatic but
+carried its blue channel 1-2 points *below* red and green on nine of ten dark
+neutrals. `--ink` (`#EDEDEB`) paints the display headline, the buttons, the
+toggle and every light element, so a very slightly warm off-white covered a
+large area of a near-black page and the whole thing read as cream. Sampling the
+operator's own screenshot confirmed it: the ground was perfectly neutral
+(`#0f0f0f`, R=G=B) while the light elements measured `#eaeae8`, blue lowest.
+
+- **Palette is now Slate**, a cool blue-grey: every neutral carries its blue
+  channel at or above red and green. Dark `--paper` `#080B10`, `--ink` `#E6EDF5`;
+  light `--paper` `#F3F5F8`, `--ink` `#0E1621`. The DRIP quadrant hues, the
+  status colours, the ink accent and every layout rule are unchanged.
+- **`npm run validate:palette` now fails on any warm neutral.** Verified the
+  guard flags 6/6 of the old values and 0/6 of the new. A one-point channel
+  error is invisible in a hex diff and not reliably catchable by eye on a single
+  monitor, so it belongs in CI rather than in a review.
+- Stale palette language purged from `design-system.md`: the sequential ramp
+  still listed the original sand hexes, and four references still described the
+  hero figure and lit rung as "cobalt".
+
+**Auth email.** Sign-in emails were arriving as `Supabase Auth
+<noreply@mail.app.supabase.io>` with Supabase's stock copy.
+
+- `supabase/templates/magic-link.html` — branded template, version-controlled so
+  it cannot drift from what is pasted into the dashboard. Tables and inline
+  styles for Outlook, a light ground because email dark mode inverts
+  backgrounds without reliably inverting text, the link printed as visible text
+  beneath the button because scanners rewrite anchors, and the 2×2 mark drawn in
+  nested tables because clients block images.
+- `docs/architecture/auth-email.md` — custom SMTP, template, and redirect-URL
+  setup. Flags the operationally important part: the built-in mailer is capped
+  at a few messages per hour project-wide, so a link sent to a reviewer can
+  silently fail to arrive. The sender cannot be changed without custom SMTP.
+- Registered under `[auth.email.template.magic_link]` in `supabase/config.toml`
+  so local dev uses the same template. Hosted Supabase does not read that file;
+  the dashboard steps are in the doc.
+
 ### Brand marks — favicon and link-unfurl card (2026-07-31)
 
 The app was still serving the stock Next.js favicon, and had no OG image, so

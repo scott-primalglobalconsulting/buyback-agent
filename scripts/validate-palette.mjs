@@ -160,6 +160,21 @@ function checkTheme(name, t) {
     report(`--accent vs --${q}`, d.toFixed(1), d >= 18);
   }
 
+  // Temperature. The chrome is meant to be cool blue-grey, so every neutral
+  // must carry its blue channel at or above red and green. This exists because
+  // an earlier palette was described as achromatic and shipped with blue 1-2
+  // points LOW on nine of ten dark neutrals — invisible in a hex diff, but
+  // --ink paints the display headline and every light element, so the whole
+  // page read as cream. A one-point channel error is not something to catch by
+  // eye on your own monitor.
+  console.log('  -- neutral temperature (blue must not be lowest) --');
+  for (const n of ['paper', 'panel', 'panel-2', 'inset', 'line', 'line-2', 'ink', 'ink-2', 'ink-3', 'accent']) {
+    const hex = t[n];
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const warm = b < Math.min(r, g);
+    report(`--${n}`, hex, !warm, `R${r} G${g} B${b}${warm ? '  <- WARM' : ''}`);
+  }
+
   console.log('  -- surfaces and hairlines --');
   for (const [a, b] of [['paper', 'panel'], ['panel', 'panel-2'], ['panel-2', 'inset']]) {
     const dL = Math.abs(lightnessOf(t[a]) - lightnessOf(t[b]));
