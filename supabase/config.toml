@@ -250,6 +250,13 @@ otp_expiry = 3600
 subject = "Your sign-in link for Buyback Agent"
 content_path = "./supabase/templates/magic-link.html"
 
+# Fires for addresses that do not exist yet. The app only calls signInWithOtp,
+# and GoTrue routes a new address through signup, so this is the template every
+# FIRST-TIME visitor receives — not magic_link.
+[auth.email.template.confirmation]
+subject = "Your sign-in link for Buyback Agent"
+content_path = "./supabase/templates/confirm-signup.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

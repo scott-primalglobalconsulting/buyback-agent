@@ -1,7 +1,17 @@
 <!--
-  Magic-link sign-in email. Paste into Supabase Dashboard ->
-  Authentication -> Email Templates -> Magic Link. Setup and the custom-SMTP
-  sender change are documented in docs/architecture/auth-email.md.
+  First sign-in email. Paste into Supabase Dashboard ->
+  Authentication -> Email Templates -> Confirm sign up. Setup is documented in
+  docs/architecture/auth-email.md.
+
+  WHY THIS EXISTS: the app only calls signInWithOtp. When the address is new,
+  GoTrue creates the user and sends THIS template, not Magic Link. So every
+  first-time visitor sees this one and only returning users see the other. It is
+  deliberately near-identical to magic-link.html.
+
+  It does not say "confirm your signup". The user typed their address into a
+  form labelled Sign in; naming this after the backend's account-creation step
+  would describe our plumbing rather than their intent. Clicking signs them in,
+  and confirmation is incidental.
 
   Supabase substitutes {{ .ConfirmationURL }}. Do not rename it.
 
@@ -21,7 +31,7 @@
      would be the word "Sign in" and wastes the slot. The trailing entities stop
      the client pulling body copy in after it. -->
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f3f5f8;">
-  One click signs you in. The link works once and expires in one hour.
+  First time here. One click signs you in, no account setup needed.
   &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
 </div>
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f5f8;margin:0;padding:32px 0;">
@@ -62,9 +72,10 @@
               Here is your link to Buyback Agent.
             </p>
             <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:#4a5666;">
-              One click signs you in. There is no password to remember. The link
-              works once and expires one hour after it was sent. If it has expired,
-              request a new one from the sign-in page.
+              This is your first time signing in, so this link doubles as email
+              confirmation. There is no account to set up and no password to
+              choose. The link works once and expires one hour after it was sent.
+              If it has expired, request a new one from the sign-in page.
             </p>
           </td>
         </tr>
