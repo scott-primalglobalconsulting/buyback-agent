@@ -1,0 +1,124 @@
+<!--
+  First sign-in email. Paste into Supabase Dashboard ->
+  Authentication -> Email Templates -> Confirm sign up. Setup is documented in
+  docs/architecture/auth-email.md.
+
+  WHY THIS EXISTS: the app only calls signInWithOtp. When the address is new,
+  GoTrue creates the user and sends THIS template, not Magic Link. So every
+  first-time visitor sees this one and only returning users see the other. It is
+  deliberately near-identical to magic-link.html.
+
+  It does not say "confirm your signup". The user typed their address into a
+  form labelled Sign in; naming this after the backend's account-creation step
+  would describe our plumbing rather than their intent. Clicking signs them in,
+  and confirmation is incidental.
+
+  Supabase substitutes {{ .ConfirmationURL }}. Do not rename it.
+
+  Constraints this is written to:
+  - Tables and inline styles, because Outlook ignores flexbox, grid, and most
+    external CSS.
+  - Light ground with dark text. Email-client dark mode is inconsistent and
+    frequently inverts backgrounds without inverting text, so a design that
+    depends on a dark ground breaks in the wild.
+  - A visible URL under the button: corporate mail scanners rewrite or strip
+    anchors, and some clients block the styled table entirely.
+  - Colours are the Slate light tokens, hardcoded because email has no
+    custom properties.
+-->
+<!-- Preheader: the grey text Gmail and Apple Mail show beside the subject in the
+     inbox list. Without one, clients scrape the first visible text, which here
+     would be the word "Sign in" and wastes the slot. The trailing entities stop
+     the client pulling body copy in after it. -->
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f3f5f8;">
+  First time here. One click signs you in, no account setup needed.
+  &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f5f8;margin:0;padding:32px 0;">
+  <tr>
+    <td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:#ffffff;border:1px solid #dbe0e8;border-radius:8px;">
+        <tr>
+          <td style="padding:32px 32px 0 32px;">
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding-right:12px;vertical-align:middle;">
+                  <!-- The DRIP 2x2 mark, drawn as a nested table so it renders
+                       without an image request. Blocked images are the norm. -->
+                  <table cellpadding="0" cellspacing="0" border="0" style="background:#0e1621;border-radius:8px;padding:7px;">
+                    <tr>
+                      <td style="padding:2px;"><div style="width:8px;height:8px;background:#ffffff;opacity:0.42;border-radius:2px;font-size:0;line-height:0;">&nbsp;</div></td>
+                      <td style="padding:2px;"><div style="width:8px;height:8px;background:#ffffff;opacity:0.42;border-radius:2px;font-size:0;line-height:0;">&nbsp;</div></td>
+                    </tr>
+                    <tr>
+                      <td style="padding:2px;"><div style="width:8px;height:8px;background:#ffffff;border-radius:2px;font-size:0;line-height:0;">&nbsp;</div></td>
+                      <td style="padding:2px;"><div style="width:8px;height:8px;background:#ffffff;border-radius:2px;font-size:0;line-height:0;">&nbsp;</div></td>
+                    </tr>
+                  </table>
+                </td>
+                <td style="vertical-align:middle;font-family:Georgia,'Times New Roman',serif;font-size:20px;color:#0e1621;">
+                  Buyback Agent
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+            <p style="margin:0 0 12px 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#778397;font-family:'SFMono-Regular',Menlo,Consolas,monospace;">
+              Sign in
+            </p>
+            <p style="margin:0 0 16px 0;font-size:22px;line-height:1.3;color:#0e1621;font-family:Georgia,'Times New Roman',serif;">
+              Here is your link to Buyback Agent.
+            </p>
+            <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:#4a5666;">
+              This is your first time signing in, so this link doubles as email
+              confirmation. There is no account to set up and no password to
+              choose. The link works once and expires one hour after it was sent.
+              If it has expired, request a new one from the sign-in page.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 32px;">
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="background:#0e1621;border-radius:4px;">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:inline-block;padding:14px 26px;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:14px;color:#ffffff;text-decoration:none;">
+                    Sign in to Buyback Agent
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:22px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+            <p style="margin:0 0 6px 0;font-size:13px;color:#778397;">
+              If the button does not work, paste this into your browser:
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;font-family:'SFMono-Regular',Menlo,Consolas,monospace;color:#4a5666;">
+              {{ .ConfirmationURL }}
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:26px 32px 30px 32px;">
+            <div style="border-top:1px solid #dbe0e8;padding-top:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+              <p style="margin:0 0 8px 0;font-size:13px;line-height:1.6;color:#778397;">
+                You are receiving this because this address was entered on the
+                Buyback Agent sign-in page. If that was not you, ignore this email.
+                No account is created and no link is used until someone clicks it.
+              </p>
+              <p style="margin:0;font-size:12px;line-height:1.6;color:#97a3b2;">
+                Buyback Agent is an independent demo. It is not affiliated with,
+                endorsed by, or associated with Martell Group or Dan Martell.
+              </p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

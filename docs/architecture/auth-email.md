@@ -56,12 +56,45 @@ For local development only, the equivalent lives in `supabase/config.toml` under
 the commented `[auth.email.smtp]` block, reading the key from an env var. Hosted
 Supabase ignores that file.
 
-## 2. The email template
+## 2. The email templates — there are two, and the important one is not the obvious one
 
-**Authentication → Email Templates → Magic Link.**
+**Authentication → Emails → Templates.**
 
-- Subject: `Your sign-in link for Buyback Agent`
-- Body: paste the contents of `supabase/templates/magic-link.html`.
+The app only calls `signInWithOtp`. GoTrue routes that call by whether the
+address already exists, and the two branches use different templates:
+
+| Address | Template that fires | Who sees it |
+|---|---|---|
+| New | **Confirm sign up** | every first-time visitor |
+| Existing | **Magic link or OTP** | returning users |
+
+Testing sign-in with your own address only ever exercises Magic link, because
+your account exists. **Confirm sign up is what a reviewer or prospect receives**,
+so it is the one that most needs to not look like stock Supabase.
+
+Paste both. They share a subject and a design, so the experience is identical
+either way:
+
+- Subject (both): `Your sign-in link for Buyback Agent`
+- Confirm sign up body: `supabase/templates/confirm-signup.html`
+- Magic link or OTP body: `supabase/templates/magic-link.html`
+
+Neither says "confirm your signup". The user typed their address into a form
+labelled Sign in; naming the email after the backend's account-creation step
+describes our plumbing rather than their intent.
+
+To test the new-user path without burning a real address, use a plus address
+(`you+prospect1@yourdomain.com`). Workspace and Gmail deliver it to your normal
+inbox; Supabase treats it as a brand-new user. Each address is only new once, so
+increment the suffix per run.
+
+### The four templates to leave alone
+
+Invite user, Change email address, Reset password and Reauthentication cannot
+fire here: there is no password auth, no email-change UI, no reauthentication
+step, and `inviteByEmail` adds an existing user to a workspace without sending
+mail. Styling them is effort on unreachable paths, and it rots. Revisit only if
+one of those flows is added.
 
 Keep `{{ .ConfirmationURL }}` exactly as written; Supabase substitutes it. If you
 edit the template in the dashboard, mirror the change back into this repo or the

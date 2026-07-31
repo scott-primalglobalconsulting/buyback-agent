@@ -75,7 +75,9 @@ buyback-agent/
       0004_audit_summary.sql                # persisted first-hire summary
       0005_revenue_context.sql              # revenue proximity + workspace income context
     tests/rls-isolation.sql                 # cross-workspace isolation proof (see ARCHITECTURE.md)
-    templates/magic-link.html               # sign-in email (mirrored into the Supabase dashboard)
+    templates/                              # auth emails, mirrored into the Supabase dashboard
+      confirm-signup.html                   # fires for NEW addresses (every first-time visitor)
+      magic-link.html                       # fires for existing addresses (returning users)
   scripts/
     validate-palette.mjs                    # contrast + colour-vision gate on globals.css
   evals/
