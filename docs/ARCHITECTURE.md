@@ -94,7 +94,7 @@ superuser, then re-runs the reads as each `authenticated` user with a forged
 JWT `sub` claim (exactly how PostgREST presents a logged-in user). It runs
 inside a transaction that is rolled back, leaving no residue.
 
-Source: `.superpowers/sdd/rls-transcript.sql`.
+Source: [`supabase/tests/rls-isolation.sql`](../supabase/tests/rls-isolation.sql).
 
 ```sql
 begin;
@@ -170,7 +170,7 @@ rollback;
 Applied to a fresh DB via `supabase db reset` (0001 + 0002), then run with:
 
 ```
-docker exec -i supabase_db_buyback-agent psql -U postgres -d postgres < .superpowers/sdd/rls-transcript.sql
+docker exec -i supabase_db_buyback-agent psql -U postgres -d postgres < supabase/tests/rls-isolation.sql
 ```
 
 Run with `psql -q` (success-status lines suppressed; a successful write is

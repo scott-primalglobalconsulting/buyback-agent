@@ -1,21 +1,21 @@
 # Buyback Agent
 
-Last updated: 2026-07-23 13:05 MST
+Last updated: 2026-07-31 13:24 -0500
 
-See @~/dev/_shared/CLAUDE.md for shared library, agents, and components (load on demand).
-Next.js conventions: `~/dev/_shared/sops/nextjs-project-conventions.md`.
+Working notes for anyone (human or agent) making changes here. Conventions and
+gates live in `docs/architecture/`; the per-task history is `docs/CHANGELOG.md`.
 
 ## Status
 
-Phase 1 (scaffold + CI) complete. An AI micro-SaaS operationalizing Dan
-Martell's Buyback Loop (Audit -> Transfer -> Fill): founder enters a week's
-tasks, an engineered LLM agent scores each into DRIP quadrants + value
-tiers + keep/delegate/eliminate, computes a buyback rate, recommends the
-first hire, and generates delegation SOPs. Independent demo — not
-affiliated with or endorsed by Martell Group or Dan Martell.
+Built, deployed, and live at https://buyback-agent.vercel.app. An AI micro-SaaS
+operationalizing Dan Martell's Buyback Loop (Audit -> Transfer -> Fill): founder
+enters a week's tasks, an engineered LLM agent scores each into DRIP quadrants +
+value tiers + keep/delegate/eliminate, computes a buyback rate, recommends the
+first hire, and generates delegation SOPs. Independent demo — not affiliated
+with or endorsed by Martell Group or Dan Martell.
 
-Full spec: `docs/superpowers/specs/2026-07-23-buyback-agent-design.md`.
-Build plan: `docs/superpowers/plans/2026-07-23-buyback-agent.md`.
+Full spec: `docs/specs/2026-07-23-buyback-agent-design.md`.
+Build plan: `docs/plans/2026-07-23-buyback-agent.md`.
 
 ## Stack
 
@@ -40,6 +40,7 @@ npm run build       # production build
 npm run lint        # eslint . (Next 16 removed `next lint`)
 npm run typecheck   # tsc --noEmit
 npm test            # vitest run
+npm run validate:palette  # contrast + colour-vision gate on app/globals.css
 npm run eval        # tsx evals/run.ts — calls the live Anthropic API, not in CI
 ```
 

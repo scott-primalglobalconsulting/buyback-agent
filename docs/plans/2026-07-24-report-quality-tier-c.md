@@ -1,7 +1,5 @@
 # Report-Quality Tier C + B Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Make the report opinionated and defensible: score each task's revenue-proximity independently of DRIP, warn when non-revenue "Invest" crowds out selling, compute a real $/hr Buyback Rate, show a one-line sold-vs-built summary, and stop the SOPs from inventing a funded tool stack.
 
 **Architecture:** The per-task `revenueProximity` is a **model-output** field (classification-contract change → Zod + tool JSON schema + drift test + prompt + Gate-3 eval). Everything else is **pure domain math** (`lib/buyback`) + **audit-level inputs** that flow form → `persistAudit` server action → `createAudit` → audit row, never through `/api/analyze`. SOP context (team/tool-budget) rides into the SOP prompt via the existing `/api/sop` `context` seam, promoted to structured fields. No new runtime dependencies.
@@ -56,7 +54,7 @@
 - `lib/export.ts` — sold-vs-built line, $/hr rate line, Revenue column.
 - `app/globals.css` — classes for the caution banner, revenue chip, rate stat.
 - Tests: `__tests__/agent/schema.test.ts`, `__tests__/buyback/rate.test.ts` (if present; else add), `__tests__/export.test.ts`.
-- Docs: `docs/architecture/migrations.md`, `docs/CHANGELOG.md`, `.superpowers/sdd/progress.md`.
+- Docs: `docs/architecture/migrations.md`, `docs/CHANGELOG.md`, and the local task ledger.
 
 ---
 
@@ -1017,7 +1015,7 @@ Expected: all green. Read the actual output.
 
 - [ ] **Step 3: Confirm the demo path still parses** — hit `/demo`; the existing cache row lacks `revenueProximity` but the optional schema tolerates it (no error event). The next live demo re-caches with proximity present.
 
-- [ ] **Step 4: Update docs** — `docs/CHANGELOG.md` (one entry per committed task, with commit refs) and `.superpowers/sdd/progress.md` (mark each task DONE with its commit). Update `docs/architecture/file-map.md` if it enumerates components (add `RevenueSummary`, migration 0005).
+- [ ] **Step 4: Update docs** — `docs/CHANGELOG.md` (one entry per committed task, with commit refs) and the local task ledger (mark each task DONE with its commit). Update `docs/architecture/file-map.md` if it enumerates components (add `RevenueSummary`, migration 0005).
 
 - [ ] **Step 5: Hosted migration (operator gate)** — apply 0005 to hosted Supabase: `supabase db push` (adds the nullable columns; no RLS change). Confirm `supabase migration list` shows Local + Remote both through 0005.
 

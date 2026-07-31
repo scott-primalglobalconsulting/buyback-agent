@@ -41,7 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# session/controller scratch (never committed)
+# local session / build-controller scratch (never committed)
 SESSION.md
 NOTES.md
 .superpowers/
+private/
+.claude/
+

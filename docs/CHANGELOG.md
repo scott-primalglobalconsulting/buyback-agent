@@ -2,6 +2,89 @@
 
 ## Unreleased
 
+### Repo hygiene — tooling names out, dangling references fixed (2026-07-31)
+
+Documentation and structure only; no code change. Prompted by a pre-review pass
+over what a first-time reader actually sees.
+
+- **Build tooling removed from the repo's vocabulary.** `docs/superpowers/`
+  became `docs/plans/` and `docs/specs/` (as renames, so history follows), and
+  the `> **For agentic workers:** REQUIRED SUB-SKILL: ...` preamble is gone from
+  both plans and the spec — it was the first line of the build plan. References
+  updated in `CLAUDE.md`, `docs/ARCHITECTURE.md`,
+  `docs/architecture/{conventions,migrations}.md` and this file.
+- **Three tracked docs pointed at a gitignored file.** `ARCHITECTURE.md` (twice)
+  and `migrations.md` sourced the cross-workspace isolation proof from
+  `.superpowers/sdd/rls-transcript.sql`, which is not in the repo — so the
+  evidence the README leans on could not be opened. The transcript is
+  self-contained and carries only hardcoded dummy UUIDs, so it now ships as
+  `supabase/tests/rls-isolation.sql` and the references resolve.
+- **`docs/architecture/file-map.md` rewritten against the real tree.** It had no
+  `components/` section, was missing migrations 0004 and 0005, and closed with
+  "Present as of Task 1.3 — everything under `lib/` is built in later phases" on
+  a shipped product. Every path in the new map was checked to exist.
+- **`CLAUDE.md`** dropped its `~/dev/_shared/` machine-local references, and the
+  Status section no longer claims "Phase 1 (scaffold + CI) complete".
+- **Local scratch can no longer be committed by accident.** `.claude/` and
+  `private/` are gitignored and `.claude/settings.json` is untracked; the
+  session-handoff artifacts that were sitting untracked-but-unignored in `docs/`
+  and `.claude/` are out of the working tree.
+- **History audited, nothing to remove.** All 102 paths ever committed across
+  every branch are still tracked (nothing was committed then deleted), and all
+  255 historical blobs were scanned for `sk-ant-` keys, JWTs, Supabase project
+  URLs, AWS keys and PEM private keys. The only matches are the literal string
+  `service_role` in SQL prose about the Postgres role. No credential has been in
+  this repository at any point.
+
+### Graphite palette, ornament removal, theme toggle (2026-07-31)
+
+Colour and chrome only. No component structure, business logic, contract,
+schema, persistence, or rollup-math change. Files: `app/globals.css`,
+`app/layout.tsx`, `components/ThemeToggle.tsx` (new),
+`scripts/validate-palette.mjs` (new), the four page headers,
+`docs/architecture/design-system.md`, `.github/workflows/ci.yml`,
+`package.json`, `CLAUDE.md`. Lint, typecheck, 106 tests, build and the new
+palette gate all green.
+
+- **Two accessibility defects found and fixed.** `.rec.delegate` rendered the
+  old teal as 10.5px text at **2.21:1** on `--panel`, a WCAG AA failure that was
+  live. Separately, Delegate and Produce sat **9.2** apart perceptually and
+  **9.3** apart under simulated deuteranopia — inside the band this doc already
+  flagged as risky. Now 15.9 / 13.3 (light) and 20.3 / 12.4 (dark).
+- **New palette: Graphite.** Achromatic chrome, `--accent` is ink. The warm sand
+  ground is gone from both themes. Token names, count and semantics unchanged,
+  so no component was touched to apply it.
+- **Why the accent is not a hue.** Spacing the four quadrant colours far enough
+  apart to survive red-green CVD forces them to occupy blue; every chromatic
+  accent then collides with one (cobalt ~9 from Invest, jade ~9 from Delegate,
+  copper ~8 from Replace). Magenta was the only clear chromatic option. Ink was
+  chosen so the quadrant hues are the only colour on the page.
+- **`.rchip.r--revenue-adjacent` remapped** from `--accent` to
+  `--drip-delegate`. With an ink accent it would have been indistinguishable
+  from an untagged chip. This is the only rule whose meaning changed.
+- **Ornament removed.** The 3px accent rails on `.rate-buyback`, `.rev-caution`,
+  `.rep-why .just`, `.qcell` and `.rung.on` are gone; those callouts are now set
+  with a hairline rule and a mono label. Semantic chips (`.rec`, `.rchip`,
+  `.state-badge`) dropped their tinted fills and 100px pill radius for an
+  outline. Quadrant cells kept the wash and lost the duplicate tinted border.
+  Dashed borders on `.af-add` and `.audit-empty` went solid. The skeleton's
+  sweeping gradient became an opacity breath.
+- **`.btn-primary:hover` was a no-op in light mode** — it mixed `--accent`
+  toward `#000`, and `--accent` is now near-black. Mixes toward `--paper`
+  instead, so it lightens on light and darkens on dark.
+- **Theme toggle** in every header, overriding the OS preference in both
+  directions. State lives on `<html data-theme>` and is read via
+  `useSyncExternalStore`, not copied into React state in an effect, so an OS
+  theme change or a second tab both propagate. A pre-paint inline script in
+  `app/layout.tsx` applies the stored choice before first paint (hence
+  `suppressHydrationWarning` on `<html>`). Storage key is namespaced
+  `buyback:theme` — a bare `theme` collides with anything else on the origin.
+- **`npm run validate:palette`, now a CI gate.** Parses the shipped tokens out
+  of `app/globals.css` rather than a copy, so the numbers in the design doc
+  cannot drift. Checks contrast floors, quadrant separation under
+  Viénot–Brettel–Mollon dichromat simulation, accent-vs-quadrant distance,
+  surface stepping, ramp monotonicity, and that all four theme blocks agree.
+
 ### Mobile pass — touch targets, inline help, popover overflow (2026-07-24)
 
 Follow-up to the two UI reworks below, which were responsive but not optimized
@@ -123,7 +206,7 @@ change to the API contract, `meta` shape, validation, or persistence — the sam
 The strategic report-quality upgrade (review items #3, #6, #7, #4, #5), built on
 branch `tier-c-report-quality` via the SDD cadence (implementer + adversarial
 reviewer per task on Opus 4.8) with a final whole-branch review. Plan:
-`docs/superpowers/plans/2026-07-24-report-quality-tier-c.md`. Commits `df00d74`
+`docs/plans/2026-07-24-report-quality-tier-c.md`. Commits `df00d74`
 (C1) through `24cb497` (fix wave).
 
 - **#3 Revenue-proximity dimension.** Each task is scored `revenue-direct |
@@ -434,7 +517,7 @@ Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
 - Added `docs/ARCHITECTURE.md`: membership-keyed RLS model, security-definer
   rationale, policy summary, and the cross-workspace isolation transcript
   (captured live-DB output pending — controller runs it as Gate 4 evidence).
-- Added `.superpowers/sdd/rls-transcript.sql` (gitignored; mirrored verbatim
+- Added `supabase/tests/rls-isolation.sql` (mirrored verbatim
   into `docs/ARCHITECTURE.md`): adversarial, self-contained, rolled-back
   transcript proving userA cannot read workspace B's audit while in-workspace
   rows stay visible.
@@ -484,7 +567,7 @@ Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
   `SUPABASE_SERVICE_ROLE_KEY`, `SERVER_SALT`.
 - Fixed `.gitignore`: narrowed the blanket `.env*` rule to `.env*.local` so
   `.env.example` stays tracked; added `SESSION.md`, `NOTES.md`,
-  `.superpowers/` (controller scratch, never committed).
+  the local build-controller scratch directory (never committed).
 - Added `.claude/settings.json` (committed project meta: deployTier A, saas
   stack). `.claude/settings.local.json` remains session-local and untracked.
 - Added `CLAUDE.md` and `docs/architecture/{file-map,conventions,local-dev,
