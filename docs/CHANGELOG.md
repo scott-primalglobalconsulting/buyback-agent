@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+### Auth emails branded and verified live (2026-07-31)
+
+Custom SMTP through Resend on `primalglobalconsulting.com`, both reachable
+templates replaced, verified end-to-end against the hosted project.
+
+- **Two templates, not one, and the obvious one was the wrong one.** The app only
+  calls `signInWithOtp`. GoTrue routes that by whether the address exists: a new
+  address is created and sent **Confirm sign up**, an existing one is sent
+  **Magic link or OTP**. Signing in with an account you already have therefore
+  only ever exercises Magic link, so the template every first-time visitor
+  receives was still stock Supabase while the styled one was unreachable for
+  them. Added `supabase/templates/confirm-signup.html`, derived from
+  `magic-link.html` so the two cannot drift, with copy for a first visit. Both
+  share a subject, so a user cannot tell which branch they hit.
+- **Neither template says "confirm your signup."** The user typed an address into
+  a form labelled Sign in. Naming the email after the backend's account-creation
+  step describes our plumbing rather than their intent; clicking signs them in
+  and the confirmation is incidental.
+- **Inbox preheader added.** Without one, Gmail and Apple Mail scrape the first
+  visible text, which was the eyebrow "Sign in". The preheader also doubles as
+  the tell for which branch fired during testing.
+- **Expiry stated exactly.** `otp_expiry = 3600`, so the copy says one hour
+  rather than "shortly".
+- **Four templates deliberately left stock**: Invite user, Change email address,
+  Reset password, Reauthentication. None can fire — there is no password auth, no
+  email-change UI, no reauthentication step, and `inviteByEmail` adds an existing
+  user to a workspace without sending mail.
+- **Testing the new-user path needs a plus address.** Each one is only new once;
+  reusing it silently moves the test onto the Magic link branch. Documented in
+  `docs/architecture/auth-email.md`.
+- No application code changed. Templates live in the Supabase dashboard; the repo
+  copies under `supabase/templates/` are the version-controlled mirror, also
+  registered in `supabase/config.toml` so local dev uses the same files.
+
 ### Slate palette, warm-neutral gate, auth email (2026-07-31)
 
 **The previous palette shipped a bug.** It was documented as achromatic but
