@@ -243,6 +243,13 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Local dev uses the same magic-link template that is pasted into the hosted
+# dashboard, so the two cannot drift. Hosted Supabase does NOT read this file —
+# see docs/architecture/auth-email.md for the dashboard + SMTP steps.
+[auth.email.template.magic_link]
+subject = "Your sign-in link for Buyback Agent"
+content_path = "./supabase/templates/magic-link.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

@@ -1,6 +1,6 @@
 # Design System — Phase 5 UI
 
-Last updated: 2026-07-31 13:24 -0500
+Last updated: 2026-07-31 14:01 -0500
 
 The source of truth for the Buyback Agent product UI. Every Phase 5 component
 derives its color, type, and layout from this doc. Palette comparison and
@@ -13,10 +13,17 @@ contrast evidence (internal, private Artifact):
   viz. No component-kit theme shipped untouched. Radix primitives are pulled in
   only where accessibility is hard (dialog, dropdown/menu, toast); Lucide for
   icons.
-- **Color means data.** The chrome is achromatic — a true neutral grey with no
-  hue bias, and `--accent` is ink, not a brand color. The only color in the
-  product is the four DRIP quadrant hues plus the three status colors. Status
-  red is reserved for critical/error only.
+- **Color means data.** The chrome is a cool blue-grey and `--accent` is ink,
+  not a brand color. The only color in the product is the four DRIP quadrant
+  hues plus the three status colors. Status red is reserved for
+  critical/error only.
+- **The chrome runs cool, and that is enforced.** Every neutral carries its blue
+  channel at or above red and green. `npm run validate:palette` fails the build
+  otherwise. This gate exists because the predecessor palette was documented as
+  achromatic and shipped with blue 1-2 points *low* on nine of ten dark
+  neutrals: invisible in a hex diff, but `--ink` paints the display headline and
+  every light element, so a whole page read as cream. A one-point channel error
+  is not catchable by eye on your own monitor.
 - **State it once.** A fact gets one visual treatment, not three. A washed cell
   does not also need a colored border and a hue rail; a semantic chip does not
   need a tinted fill behind a word that already says "eliminate". Callouts are
@@ -36,17 +43,17 @@ both directions. Style components through the tokens, never hard-code a hex.
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `--paper` | `#F4F4F3` | `#0C0C0C` | Page ground (true neutral, no hue bias) |
-| `--panel` | `#FFFFFF` | `#171716` | Card / surface |
-| `--panel-2` | `#EBEBEA` | `#121211` | Recessed surface, table header, ladder ground |
-| `--inset` | `#E1E1E0` | `#1F1F1E` | Track / well backgrounds |
-| `--line` | `#DDDDDC` | `#2E2E2D` | Hairline borders |
-| `--line-2` | `#C0C0BF` | `#3E3E3D` | Stronger dividers, chip outlines |
-| `--ink` | `#111111` | `#EDEDEB` | Primary text |
-| `--ink-2` | `#545454` | `#A2A2A0` | Secondary text |
-| `--ink-3` | `#7C7C7C` | `#767674` | Faint labels / captions |
-| `--accent` | `#111111` | `#EDEDEB` | Ink: interactive, hero figure, hire-first rung, focus |
-| `--accent-contrast` | `#FFFFFF` | `#0C0C0C` | Text/icon on accent fills |
+| `--paper` | `#F3F5F8` | `#080B10` | Page ground (cool blue-grey) |
+| `--panel` | `#FFFFFF` | `#11161F` | Card / surface |
+| `--panel-2` | `#E9EDF3` | `#0D121A` | Recessed surface, table header, ladder ground |
+| `--inset` | `#DFE4EC` | `#181F2A` | Track / well backgrounds |
+| `--line` | `#DBE0E8` | `#262F3B` | Hairline borders |
+| `--line-2` | `#BCC5D2` | `#33404F` | Stronger dividers, chip outlines |
+| `--ink` | `#0E1621` | `#E6EDF5` | Primary text |
+| `--ink-2` | `#4A5666` | `#97A3B2` | Secondary text |
+| `--ink-3` | `#778397` | `#6C7786` | Faint labels / captions |
+| `--accent` | `#0E1621` | `#E6EDF5` | Ink: interactive, hero figure, hire-first rung, focus |
+| `--accent-contrast` | `#FFFFFF` | `#080B10` | Text/icon on accent fills |
 
 **Why the accent is ink and not a hue.** Once the four quadrant colors are
 spaced far enough apart to survive red-green color vision deficiency they
@@ -99,7 +106,7 @@ These map 1:1 to `DRIP_QUADRANTS` in `lib/buyback/types.ts` (`Delegate`,
 
 ### Sequential ink ramp (magnitude, one hue)
 
-`--seq-1 … --seq-5` (light `#E9E3D7 → #282419`, dark `#24201A → #C6C0B2`). Used
+`--seq-1 … --seq-5` (light `#E3E7EE → #1A212B`, dark `#181F2A → #C2CAD4`). Used
 for single-measure magnitude only — e.g. the value-ladder hour bars. Never used
 where identity/category matters (that's the DRIP palette).
 
@@ -133,15 +140,16 @@ Type scale (px): 11 · 13 · 15 (body) · 16 · 21 · 28 · 40 · 56 · hero cla
   with its hue and listing the tasks that landed there. Not a scatter with
   fabricated axes — the model stores a categorical quadrant per task, not
   coordinates.
-- **Buyback-rate hero** — the rate as the single display-face figure in cobalt
-  with a plain-language definition on the left, and the support stats
+- **Buyback-rate hero** — the rate as the single display-face figure in `--accent`
+  (ink) with a plain-language definition on the left, and the support stats
   (reclaimable hrs/wk, first hire, and the $/hr Buyback Rate when income is
   known) in a divided right column. No arbitrary gauge.
 - **Value ladder** — hours per value tier ($10 → $10,000) as sequential-ramp
   bars; the low tiers marked as the offload zone.
 - **Replacement Ladder** — the fixed hire order (admin → delivery → marketing →
-  sales → leadership) as a vertical ladder; `summary.firstHireRole` lit in cobalt
-  with its justification, the rest dimmed. The rungs and the reasoning are ONE
+  sales → leadership) as a vertical ladder; `summary.firstHireRole` lit by
+  lifting the rung onto `--panel` over the recessed `--panel-2` ladder ground and
+  tagging it in words, with its justification, the rest dimmed. The rungs and the reasoning are ONE
   panel (rungs left, reasoning right), never a card with loose text beneath it.
   The justification renders as prose, not as a mono block — it is the product's
   argument, not a log.
@@ -192,9 +200,9 @@ Every one is a designed surface, keyed to the guard verdicts in
 
 | State | Trigger | Treatment |
 |---|---|---|
-| Streaming / thinking | live analysis | adaptive-thinking summaries stream as a mono log with a cobalt caret |
+| Streaming / thinking | live analysis | adaptive-thinking summaries stream as a mono log with an accent caret |
 | Loading | pre-stream | shimmer skeleton blocks |
-| Empty | first run / no audits | invitation + "Try sample data" (cobalt button) |
+| Empty | first run / no audits | invitation + "Try sample data" (accent button) |
 | Rate limited (429) | `rate_limited` | amber badge, "demo limit reached, sign in for unlimited" |
 | Cache served | `serve_cache` / `breaker_serve_cache` | info badge, "serving today's cached result, no live call" |
 | Unavailable (503) | `unavailable` | crit badge, "briefly paused, try again shortly" |
