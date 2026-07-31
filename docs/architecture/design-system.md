@@ -3,9 +3,10 @@
 Last updated: 2026-07-31 14:01 -0500
 
 The source of truth for the Buyback Agent product UI. Every Phase 5 component
-derives its color, type, and layout from this doc. Palette comparison and
-contrast evidence (internal, private Artifact):
-`https://claude.ai/code/artifact/82fcf60b-33d0-49c6-9101-d64b89d80531`.
+derives its color, type, and layout from this doc. The contrast and
+colour-vision evidence quoted below is reproducible with
+`npm run validate:palette`, which reads the shipped tokens straight out of
+`app/globals.css`.
 
 ## Principles
 

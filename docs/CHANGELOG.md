@@ -525,8 +525,9 @@ Built in four reviewed sub-tasks (5.3a-d), each adversarially reviewed on Opus
   floor pair carried by direct labels + spatial buckets), sequential ramp,
   reserved status colors, Instrument Serif / IBM Plex Sans / IBM Plex Mono
   pairing, hand-built viz treatments, and the full guard-state inventory.
-- Internal design-direction proof (private Artifact, not for release):
-  `https://claude.ai/code/artifact/d855a59d-493a-469f-b27a-1f507eae68b9`.
+- Design direction was proved against a standalone mockup before any component
+  was written; the approved outcome is recorded in
+  `docs/architecture/design-system.md`.
 - No app code or dependencies yet. Radix/Lucide install gated to Task 5.2 with
   explicit operator approval.
 
