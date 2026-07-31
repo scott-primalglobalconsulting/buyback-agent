@@ -20,3 +20,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Reads the shipped tokens out of app/globals.css: contrast floors,
+      # quadrant separation under simulated colour vision deficiency, and that
+      # the four theme blocks agree. Cheap, and it catches the class of bug you
+      # cannot see by looking at your own screen.
+      - run: npm run validate:palette

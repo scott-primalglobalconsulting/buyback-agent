@@ -10,6 +10,7 @@ import { DripDashboard } from '@/components/DripDashboard';
 import { TopTasks } from '@/components/TopTasks';
 import { ReplacementLadder } from '@/components/ReplacementLadder';
 import { AuditTable } from '@/components/AuditTable';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // The anonymous demo. It POSTs to /api/analyze (the route ignores the body for
 // the demo path and analyzes the fixed SAMPLE_WEEK under the abuse guard), then
@@ -124,7 +125,8 @@ export default function DemoPage() {
         <Link className="brand" href="/">
           Buyback Agent
         </Link>
-        <nav>
+        <nav className="app-nav">
+          <ThemeToggle />
           <Link className="nav-link" href="/app">
             Sign in
           </Link>

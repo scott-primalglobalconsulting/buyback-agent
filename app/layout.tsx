@@ -39,8 +39,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Applies a stored theme override before first paint. Without this the
+            page paints the OS theme and then snaps to the stored one — a visible
+            flash on every navigation. It runs synchronously and ahead of
+            hydration, which is why <html> carries suppressHydrationWarning. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('buyback:theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

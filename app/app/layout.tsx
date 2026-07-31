@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSessionUserId } from '@/lib/db/session';
 import { signOut } from './actions';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // Session gate for the authed app. Server component: no session -> /sign-in.
 // Workspace bootstrap runs once per sign-in in the auth callback (not here) so
@@ -23,6 +24,7 @@ export default async function AppLayout({
           Buyback Agent
         </Link>
         <nav className="app-nav">
+          <ThemeToggle />
           <Link className="nav-link" href="/app">
             My audits
           </Link>

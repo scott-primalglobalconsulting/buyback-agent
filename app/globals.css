@@ -9,40 +9,47 @@
    over the OS preference in both directions.
    ============================================================ */
 
+/* Graphite. The chrome is achromatic on purpose — the four DRIP hues and the
+   three status colors are the only color in the product, so hue always means
+   data. --accent is ink, not a brand hue: with the quadrant palette spaced far
+   enough apart to survive red-green CVD it necessarily occupies blue, and any
+   cobalt accent lands ~9 OKLab from Invest (the collision the previous palette
+   shipped). Validated: worst quadrant pair 15.9 normal / 13.3 dichromat, every
+   text token AA on its own ground. See docs/architecture/design-system.md. */
 :root {
   color-scheme: light dark;
 
-  --paper: #faf7f1;
-  --panel: #fefdfb;
-  --panel-2: #f2eee6;
-  --inset: #ece7dd;
-  --line: #e6e0d5;
-  --line-2: #d6cfc1;
-  --ink: #1a1711;
-  --ink-2: #615b4e;
-  --ink-3: #8d887a;
+  --paper: #f4f4f3;
+  --panel: #ffffff;
+  --panel-2: #ebebea;
+  --inset: #e1e1e0;
+  --line: #dddddc;
+  --line-2: #c0c0bf;
+  --ink: #111111;
+  --ink-2: #545454;
+  --ink-3: #7c7c7c;
 
-  --drip-delegate: #1fa8a0;
-  --drip-replace: #e0a419;
-  --drip-invest: #6e62e6;
-  --drip-produce: #3e9e5a;
+  --drip-delegate: #0e7fa8;
+  --drip-replace: #c08a12;
+  --drip-invest: #5b2fbf;
+  --drip-produce: #17743e;
 
-  --good: #3e9e5a;
-  --warn: #c98a12;
-  --crit: #c6412f;
+  --good: #15803d;
+  --warn: #9a6608;
+  --crit: #be3a2b;
 
-  --accent: #2f5fe0;
+  --accent: #111111;
   --accent-contrast: #ffffff;
 
   /* sequential ink ramp (single-measure magnitude, one hue) */
-  --seq-1: #e9e3d7;
-  --seq-2: #c7c0b0;
-  --seq-3: #928b7b;
-  --seq-4: #4e4a3f;
-  --seq-5: #282419;
+  --seq-1: #e5e5e4;
+  --seq-2: #c0c0bf;
+  --seq-3: #8c8c8b;
+  --seq-4: #535352;
+  --seq-5: #1e1e1d;
 
-  --focus: #2f5fe0;
-  --shadow: 0 1px 2px rgba(26, 23, 17, 0.05), 0 8px 24px -12px rgba(26, 23, 17, 0.16);
+  --focus: #111111;
+  --shadow: 0 1px 2px rgba(17, 17, 17, 0.05), 0 8px 24px -12px rgba(17, 17, 17, 0.16);
   --r: 4px;
   --r-lg: 8px;
   --maxw: 1080px;
@@ -55,87 +62,88 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #131210;
-    --panel: #1b1815;
-    --panel-2: #171410;
-    --inset: #221e18;
-    --line: #2b2620;
-    --line-2: #39332a;
-    --ink: #edeae2;
-    --ink-2: #a29b8d;
-    --ink-3: #746d60;
-    --drip-delegate: #20a69d;
-    --drip-replace: #bc8218;
-    --drip-invest: #7c6eee;
-    --drip-produce: #3e9c5c;
-    --good: #4fb56b;
-    --warn: #d69a1c;
-    --crit: #e06a58;
-    --accent: #5b84f0;
-    --accent-contrast: #0b1020;
-    --seq-1: #24201a;
-    --seq-2: #3b352c;
-    --seq-3: #5d5749;
-    --seq-4: #8b8474;
-    --seq-5: #c6c0b2;
-    --focus: #5b84f0;
+    --paper: #0c0c0c;
+    --panel: #171716;
+    --panel-2: #121211;
+    --inset: #1f1f1e;
+    --line: #2e2e2d;
+    --line-2: #3e3e3d;
+    --ink: #ededeb;
+    --ink-2: #a2a2a0;
+    --ink-3: #767674;
+    --drip-delegate: #3fb6e0;
+    --drip-replace: #e0a331;
+    --drip-invest: #8f63ef;
+    --drip-produce: #2e9455;
+    --good: #46b96b;
+    --warn: #d69a24;
+    --crit: #e0705e;
+    --accent: #ededeb;
+    --accent-contrast: #0c0c0c;
+    --seq-1: #1f1f1e;
+    --seq-2: #3b3b3a;
+    --seq-3: #616160;
+    --seq-4: #92928f;
+    --seq-5: #cbcbc8;
+    --focus: #ededeb;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.32), 0 12px 30px -16px rgba(0, 0, 0, 0.72);
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #131210;
-  --panel: #1b1815;
-  --panel-2: #171410;
-  --inset: #221e18;
-  --line: #2b2620;
-  --line-2: #39332a;
-  --ink: #edeae2;
-  --ink-2: #a29b8d;
-  --ink-3: #746d60;
-  --drip-delegate: #20a69d;
-  --drip-replace: #bc8218;
-  --drip-invest: #7c6eee;
-  --drip-produce: #3e9c5c;
-  --good: #4fb56b;
-  --warn: #d69a1c;
-  --crit: #e06a58;
-  --accent: #5b84f0;
-  --accent-contrast: #0b1020;
-  --seq-1: #24201a;
-  --seq-2: #3b352c;
-  --seq-3: #5d5749;
-  --seq-4: #8b8474;
-  --seq-5: #c6c0b2;
-  --focus: #5b84f0;
+  --paper: #0c0c0c;
+  --panel: #171716;
+  --panel-2: #121211;
+  --inset: #1f1f1e;
+  --line: #2e2e2d;
+  --line-2: #3e3e3d;
+  --ink: #ededeb;
+  --ink-2: #a2a2a0;
+  --ink-3: #767674;
+  --drip-delegate: #3fb6e0;
+  --drip-replace: #e0a331;
+  --drip-invest: #8f63ef;
+  --drip-produce: #2e9455;
+  --good: #46b96b;
+  --warn: #d69a24;
+  --crit: #e0705e;
+  --accent: #ededeb;
+  --accent-contrast: #0c0c0c;
+  --seq-1: #1f1f1e;
+  --seq-2: #3b3b3a;
+  --seq-3: #616160;
+  --seq-4: #92928f;
+  --seq-5: #cbcbc8;
+  --focus: #ededeb;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.32), 0 12px 30px -16px rgba(0, 0, 0, 0.72);
 }
 
 :root[data-theme="light"] {
-  --paper: #faf7f1;
-  --panel: #fefdfb;
-  --panel-2: #f2eee6;
-  --inset: #ece7dd;
-  --line: #e6e0d5;
-  --line-2: #d6cfc1;
-  --ink: #1a1711;
-  --ink-2: #615b4e;
-  --ink-3: #8d887a;
-  --drip-delegate: #1fa8a0;
-  --drip-replace: #e0a419;
-  --drip-invest: #6e62e6;
-  --drip-produce: #3e9e5a;
-  --good: #3e9e5a;
-  --warn: #c98a12;
-  --crit: #c6412f;
-  --accent: #2f5fe0;
+  --paper: #f4f4f3;
+  --panel: #ffffff;
+  --panel-2: #ebebea;
+  --inset: #e1e1e0;
+  --line: #dddddc;
+  --line-2: #c0c0bf;
+  --ink: #111111;
+  --ink-2: #545454;
+  --ink-3: #7c7c7c;
+  --drip-delegate: #0e7fa8;
+  --drip-replace: #c08a12;
+  --drip-invest: #5b2fbf;
+  --drip-produce: #17743e;
+  --good: #15803d;
+  --warn: #9a6608;
+  --crit: #be3a2b;
+  --accent: #111111;
   --accent-contrast: #ffffff;
-  --seq-1: #e9e3d7;
-  --seq-2: #c7c0b0;
-  --seq-3: #928b7b;
-  --seq-4: #4e4a3f;
-  --seq-5: #282419;
-  --focus: #2f5fe0;
+  --seq-1: #e5e5e4;
+  --seq-2: #c0c0bf;
+  --seq-3: #8c8c8b;
+  --seq-4: #535352;
+  --seq-5: #1e1e1d;
+  --focus: #111111;
+  --shadow: 0 1px 2px rgba(17, 17, 17, 0.05), 0 8px 24px -12px rgba(17, 17, 17, 0.16);
 }
 
 /* ============================ BASE ============================ */
@@ -244,19 +252,22 @@ body {
   max-width: 42ch;
   margin: 10px 0 0;
 }
+/* Sits in the stat stack, so it is set like the stats around it: a hairline
+   above, then the sentence. It used to be a filled, radiused box with a 3px
+   accent bar down its left edge — three decorations doing the work one rule
+   does, and the same treatment every callout on the web already has. */
 .rate-buyback {
-  color: var(--ink);
+  color: var(--ink-2);
   font-size: 14px;
+  line-height: 1.55;
   max-width: 44ch;
   margin: 0;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--r);
-  background: color-mix(in srgb, var(--accent) 6%, var(--panel));
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
 .rate-buyback b {
-  color: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
 }
 .stat .n {
   font-family: var(--f-display);
@@ -319,22 +330,17 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* The wash is the at-a-glance encoding and it is the only decoration the cell
+   gets. It previously also carried a tinted border and a 3px hue rail across
+   the top — the same fact stated three times. Border is a plain hairline now,
+   matching every other panel on the page. */
 .qcell {
-  background: color-mix(in srgb, var(--qc) 7%, var(--panel));
-  border: 1px solid color-mix(in srgb, var(--qc) 24%, var(--line));
+  background: color-mix(in srgb, var(--qc) 5%, var(--panel));
+  border: 1px solid var(--line);
   border-radius: var(--r-lg);
   padding: 20px;
   position: relative;
   overflow: hidden;
-}
-.qcell::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--qc);
 }
 .qhead {
   display: flex;
@@ -397,13 +403,15 @@ body {
   flex-wrap: wrap;
   gap: 6px;
 }
+/* Tint-on-tint: these sat inside an already-washed cell. The cell assigns them
+   to the quadrant, so the chip only has to be legible. */
 .qtask {
   font-family: var(--f-mono);
   font-size: 11px;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--qc) 12%, var(--panel));
-  border: 1px solid color-mix(in srgb, var(--qc) 30%, var(--line));
-  border-radius: 100px;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
   padding: 3px 9px;
 }
 .qtasks-empty {
@@ -467,30 +475,24 @@ body {
   color: var(--ink-3);
   margin-left: auto;
 }
+/* The lit rung lifts off the recessed ladder ground (--panel over --panel-2) and
+   says so in words. It used to also carry a 3px bar down its left edge; the
+   lift plus the tag is the signal, the bar was ornament. */
 .rung.on {
-  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
-}
-.rung.on::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--accent);
+  background: var(--panel);
 }
 .rung.on .role {
   color: var(--ink);
+  font-weight: 600;
 }
 .rung .tag-now {
   font-family: var(--f-mono);
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border-radius: 100px;
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
   padding: 2px 8px;
   margin-left: auto;
 }
@@ -521,8 +523,8 @@ body {
 /* The agent's reasoning is the most valuable text on the page. It used to render
    as 12.5px mono on an inset fill, which read as a log dump; it is prose now. */
 .rep-why .just {
-  border-left: 2px solid var(--line-2);
-  padding-left: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
 }
 .rep-why .just-label {
   display: block;
@@ -676,31 +678,28 @@ body {
   flex: none;
   background: var(--qc);
 }
+/* Outline + word, no fill. The tinted-pill-per-state pattern put a soft wash
+   behind three chips per row, which turned a dense table into confetti. The
+   verdict is the word; color reinforces it and does not restate it. */
 .rec {
   font-family: var(--f-mono);
   font-size: 10.5px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 3px 9px;
-  border-radius: 100px;
+  border-radius: var(--r);
   border: 1px solid var(--line-2);
   color: var(--ink-2);
   white-space: nowrap;
 }
 .rec.keep {
   color: var(--good);
-  border-color: color-mix(in srgb, var(--good) 40%, transparent);
-  background: color-mix(in srgb, var(--good) 12%, transparent);
 }
 .rec.delegate {
   color: var(--drip-delegate);
-  border-color: color-mix(in srgb, var(--drip-delegate) 40%, transparent);
-  background: color-mix(in srgb, var(--drip-delegate) 12%, transparent);
 }
 .rec.eliminate {
   color: var(--crit);
-  border-color: color-mix(in srgb, var(--crit) 40%, transparent);
-  background: color-mix(in srgb, var(--crit) 12%, transparent);
 }
 .tier {
   font-family: var(--f-mono);
@@ -737,13 +736,14 @@ body {
 .rev-line b {
   color: var(--ink);
 }
+/* An aside in a document, not a tinted alert box: hairline rule, a mono label
+   carrying the only color, then the prose. The label is what marks this as a
+   caution — the amber wash and the left bar were saying it a second and third
+   time. */
 .rev-caution {
-  margin-top: 14px;
-  padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, var(--warn) 34%, var(--line));
-  border-left: 3px solid var(--warn);
-  border-radius: var(--r);
-  background: color-mix(in srgb, var(--warn) 8%, var(--panel));
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 .rev-caution-badge {
   display: inline-block;
@@ -761,7 +761,10 @@ body {
   max-width: 62ch;
 }
 
-/* Revenue-proximity chip: labeled pill, color paired with text (never alone). */
+/* Revenue-proximity chip: labeled, color paired with text (never alone).
+   --accent is ink in this palette, so "revenue-adjacent" cannot be drawn in it
+   — it would be indistinguishable from an untagged chip. It takes the Delegate
+   hue, which is unused in this column. */
 .rchip {
   display: inline-flex;
   align-items: center;
@@ -769,30 +772,23 @@ body {
   font-size: 10.5px;
   letter-spacing: 0.02em;
   padding: 3px 9px;
-  border-radius: 100px;
+  border-radius: var(--r);
   border: 1px solid var(--line-2);
   color: var(--ink-2);
   white-space: nowrap;
 }
 .rchip.r--revenue-direct {
   color: var(--good);
-  border-color: color-mix(in srgb, var(--good) 40%, transparent);
-  background: color-mix(in srgb, var(--good) 12%, transparent);
 }
 .rchip.r--revenue-adjacent {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--drip-delegate);
 }
 .rchip.r--non-revenue {
   color: var(--ink-2);
-  border-color: var(--line-2);
-  background: var(--inset);
 }
 .rchip.r--unknown {
   color: var(--ink-3);
   border-color: var(--line);
-  background: transparent;
 }
 
 /* ============================ PAGE SHELL ============================ */
@@ -862,8 +858,11 @@ body {
   background: var(--accent);
   color: var(--accent-contrast);
 }
+/* Mixes toward the page ground, not toward black: --accent is ink here, so a
+   mix with #000 was a no-op in light mode. This lightens on light and darkens
+   on dark, so the hover reads in both themes. */
 .btn-primary:hover {
-  background: color-mix(in srgb, var(--accent) 88%, #000);
+  background: color-mix(in srgb, var(--accent) 86%, var(--paper));
 }
 .btn-ghost {
   background: transparent;
@@ -911,6 +910,41 @@ body {
   font-size: 12px;
   color: var(--crit);
   margin: 2px 0 0;
+}
+
+/* ============================ THEME TOGGLE ============================ */
+/* A labelled two-state control, not an icon. The OS preference is the default;
+   picking a side pins it (components/ThemeToggle.tsx). Words rather than a
+   sun/moon glyph because the rest of the chrome is a mono ledger voice, and an
+   icon-only switch gives a screen reader nothing without extra labelling. */
+.theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  overflow: hidden;
+  flex: none;
+}
+.theme-toggle button {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  background: transparent;
+  color: var(--ink-3);
+  border: none;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.theme-toggle button + button {
+  border-left: 1px solid var(--line-2);
+}
+.theme-toggle button:hover {
+  color: var(--ink);
+}
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 /* ============================ APP NAV ============================ */
@@ -1029,17 +1063,13 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* A quiet breath, not a sweeping highlight. The diagonal shimmer gradient reads
+   as decoration on a page whose whole argument is that nothing is decorative. */
 .skel {
-  background: linear-gradient(
-    100deg,
-    var(--inset) 30%,
-    var(--panel-2) 50%,
-    var(--inset) 70%
-  );
-  background-size: 200% 100%;
+  background: var(--inset);
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  animation: skel-shimmer 1.4s ease-in-out infinite;
+  animation: skel-breathe 1.8s ease-in-out infinite;
 }
 .skel-hero {
   grid-column: 1 / -1;
@@ -1052,12 +1082,13 @@ body {
   grid-column: 1 / -1;
   height: 180px;
 }
-@keyframes skel-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
+@keyframes skel-breathe {
+  0%,
   100% {
-    background-position: -200% 0;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
   }
 }
 
@@ -1080,7 +1111,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 4px 10px;
-  border-radius: 100px;
+  border-radius: var(--r);
   border: 1px solid var(--line-2);
   color: var(--ink-2);
 }
@@ -1093,13 +1124,9 @@ body {
 }
 .state-badge.warn {
   color: var(--warn);
-  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
-  background: color-mix(in srgb, var(--warn) 12%, transparent);
 }
 .state-badge.crit {
   color: var(--crit);
-  border-color: color-mix(in srgb, var(--crit) 45%, transparent);
-  background: color-mix(in srgb, var(--crit) 12%, transparent);
 }
 .state-card h2 {
   font-family: var(--f-display);
@@ -1410,7 +1437,7 @@ body {
   width: 100%;
   padding: 11px 13px;
   background: transparent;
-  border: 1px dashed var(--line-2);
+  border: 1px solid var(--line-2);
   border-radius: var(--r);
   font-family: var(--f-mono);
   font-size: 12.5px;
@@ -1530,6 +1557,10 @@ body {
     align-items: center;
     min-height: 44px;
   }
+  .theme-toggle button {
+    min-height: 44px;
+    padding: 0 13px;
+  }
 }
 
 /* ============================ AUDIT LIST ============================ */
@@ -1570,7 +1601,7 @@ body {
 .audit-empty {
   padding: 24px;
   background: var(--panel);
-  border: 1px dashed var(--line-2);
+  border: 1px solid var(--line);
   border-radius: var(--r-lg);
 }
 .audit-empty p {
