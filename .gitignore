@@ -46,5 +46,10 @@ SESSION.md
 NOTES.md
 .superpowers/
 private/
-.claude/
+
+# .claude/settings.json is SHARED project metadata (the pre-deploy gate reads
+# projectMeta from it), so it stays tracked. Only the personal/local overrides
+# are ignored.
+.claude/*
+!.claude/settings.json
 
