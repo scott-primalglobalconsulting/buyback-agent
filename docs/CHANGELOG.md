@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Brand marks — favicon and link-unfurl card (2026-07-31)
+
+The app was still serving the stock Next.js favicon, and had no OG image, so
+every shared link unfurled as a bare title.
+
+- **Icon is the DRIP 2x2**, the product's signature view: top row (Shed —
+  Delegate, Replace) rendered light, bottom row (Keep — Invest, Produce) solid.
+  The product's argument in four squares, still legible at 16px. Ships as
+  `app/icon.svg` for modern browsers and `app/favicon.ico` (16/32/48) for the
+  rest. The `.ico` went from 25,931 bytes of stock Next.js logo to 948 bytes.
+- **`app/opengraph-image.png`**, 1200x630, set in the real Instrument Serif and
+  IBM Plex rather than a substitute, with the four quadrant colours as a legend.
+- **Metadata completed** in `app/layout.tsx`: `metadataBase`, plus `openGraph`
+  and `twitter` blocks. Without `metadataBase` Next emits relative image URLs,
+  which no crawler or unfurler can fetch. Verified against a production build —
+  `og:image` resolves to `https://buyback-agent.vercel.app/opengraph-image.png`,
+  not the dev origin.
+
 ### Repo hygiene — tooling names out, dangling references fixed (2026-07-31)
 
 Documentation and structure only; no code change. Prompted by a pre-review pass

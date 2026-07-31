@@ -25,10 +25,30 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const SITE_URL = "https://buyback-agent.vercel.app";
+const DESCRIPTION =
+  "Score a week of work into DRIP quadrants, find where your hours leak, and name your first hire. Independent demo.";
+
+// metadataBase makes the file-convention images (app/opengraph-image.png,
+// app/icon.svg) resolve to absolute URLs. Without it Next emits relative ones,
+// which crawlers and link unfurlers cannot fetch.
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Buyback Agent",
-  description:
-    "Score a week of work into DRIP quadrants, find where your hours leak, and name your first hire. Independent demo.",
+  description: DESCRIPTION,
+  applicationName: "Buyback Agent",
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Buyback Agent",
+    title: "Buyback Agent",
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Buyback Agent",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

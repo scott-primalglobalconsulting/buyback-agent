@@ -11,7 +11,9 @@ buyback-agent/
     layout.tsx                              # fonts, metadata, pre-paint theme script
     globals.css                             # design tokens + all presentational CSS
     page.tsx                                # landing (public, disclaimer)
-    favicon.ico
+    icon.svg                                # favicon: the DRIP 2x2 mark (vector)
+    favicon.ico                             # same mark rasterised at 16/32/48 for legacy
+    opengraph-image.png                     # 1200x630 link-unfurl card
     demo/page.tsx                           # no-auth sample-data path (client, SSE)
     sign-in/
       page.tsx, sign-in-form.tsx            # magic-link sign-in (public)
